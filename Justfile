@@ -1,5 +1,5 @@
 switch:
-    darwin-rebuild switch --flake .#macbook
+    sudo darwin-rebuild switch --flake .#macbook
 
 update:
     nix flake update

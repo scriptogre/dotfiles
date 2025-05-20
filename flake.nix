@@ -1,3 +1,4 @@
+# darwin-rebuild switch --flake .#macbook
 {
   description = "My nix-darwin system flake";
 
@@ -21,22 +22,22 @@
         specialArgs = { inherit inputs; };
 
         modules = [
+          { system.primaryUser = "chris"; }
+
           mac-app-util.darwinModules.default
 
           # Base nix-darwin configuration as an inline module
           ({ pkgs, config, ... }: {
-            nixpkgs.config = {
-              allowUnfree = true;
-              allowBroken = true;
-            };
-            nixpkgs.hostPlatform = system;
-
+            nixpkgs.config.allowUnfree  = true;
+            nixpkgs.config.allowBroken = true;
+            nixpkgs.hostPlatform       = system;
             nix.settings.experimental-features = "nix-command flakes";
 
             environment.systemPackages = with pkgs; [
               caddy
               gh
               git
+              iterm2
               just
               neovim
               sqlite
@@ -45,49 +46,49 @@
               uv
             ];
 
-            homebrew = {
-              enable = true;
-              casks = [
-                "1password"
-                "1password-cli"
-                "alfred"
-                "alt-tab"
-                "anydesk"
-                "betterdisplay"
-                "bettertouchtool"
-                "brave-browser"
-                "discord"
-                "itunes-volume-control"
-                "karabiner-elements"
-                "ledger-live"
-                "mos"
-                "notunes"
-                "obs"
-                "obsidian"
-                "omnidisksweeper"
-                "orbstack"
-                "parallels"
-                "proton-mail"
-                "pycharm"
-                "slack"
-                "spotify"
-                "synology-drive"
-                "telegram"
-                "zoom"
-              ];
-              onActivation.cleanup = "zap";
-            };
-            system.stateVersion = 6;
+            fonts.packages = with pkgs; [
+              nerd-fonts.jetbrains-mono
+            ];
+
+            homebrew.enable = true;
+            homebrew.casks = [
+              "1password"
+              "1password-cli"
+              "alfred"
+              "alt-tab"
+              "anydesk"
+              "betterdisplay"
+              "bettertouchtool"
+              "brave-browser"
+              "chatgpt"
+              "discord"
+              "itunes-volume-control"
+              "karabiner-elements"
+              "ledger-live"
+              "mos"
+              "notunes"
+              "obs"
+              "obsidian"
+              "omnidisksweeper"
+              "orbstack"
+              "parallels"
+              "proton-mail"
+              "pycharm"
+              "slack"
+              "spotify"
+              "synology-drive"
+              "telegram"
+              "zoom"
+            ];
+            homebrew.onActivation.cleanup = "zap";
+              system.stateVersion = 6;
           })
 
           # Nix-homebrew module
-          nix-homebrew.darwinModules.nix-homebrew
-          {
-            nix-homebrew = {
-              enable = true;
-              enableRosetta = true;
-              user = "chris";
-            };
+          nix-homebrew.darwinModules.nix-homebrew {
+            nix-homebrew.enable        = true;
+            nix-homebrew.enableRosetta = true;
+            nix-homebrew.user          = "chris";
           }
         ];
       };

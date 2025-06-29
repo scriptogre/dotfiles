@@ -1,99 +1,180 @@
-# ./flake.nix
 {
-  description = "My nix-darwin system flake";
+  description = "Chris's macOS configuration with nix-darwin + home-manager";
 
+  # ============================================================================
+  # INPUTS - External flake dependencies
+  # ============================================================================
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-
+    
     home-manager = {
-      url = "github:nix-community/home-manager"; # Or specific release branch
+      url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
+    
     nix-darwin = {
       url = "github:nix-darwin/nix-darwin";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
-    nix-homebrew = {
-      url = "github:zhaofengli-wip/nix-homebrew";
-      # No need to follow nixpkgs here unless it exports a pkgs itself
-    };
-
-    mac-app-util = {
-      url = "github:hraban/mac-app-util";
-      # No need to follow nixpkgs here
-    };
+    
+    nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
+    mac-app-util.url = "github:hraban/mac-app-util";
   };
 
-  outputs = inputs@{ self, nixpkgs, home-manager, nix-darwin, nix-homebrew, mac-app-util, ... }:
-    let
-      system = "aarch64-darwin";
-      username = "chris";  # User for whom Home Manager and nix-homebrew will be configured
-    in
-    {
-      darwinConfigurations.macbook = nix-darwin.lib.darwinSystem {
-        inherit system;
-        # Pass inputs to modules, so they can access e.g. inputs.nixpkgs
-        # or inputs.self (if you added self to inputs for local paths)
-        specialArgs = { inherit inputs username system; };
+  # ============================================================================
+  # OUTPUTS - System configurations
+  # ============================================================================
+  outputs = { nixpkgs, home-manager, nix-darwin, nix-homebrew, mac-app-util, ... }: 
+  let
+    # Configuration constants - modify these to customize your setup
+    system = "aarch64-darwin";
+    username = "chris";
+    hostname = "macbook";
+  in
+  {
+    darwinConfigurations.${hostname} = nix-darwin.lib.darwinSystem {
+      inherit system;
+      
+      modules = [
+        # ======================================================================
+        # SYSTEM CONFIGURATION - macOS settings, services, and security
+        # ======================================================================
+        {
+          # Basic system settings
+          nixpkgs.config.allowUnfree = true;
+          nixpkgs.config.allowBroken = true;
+          nix.settings.experimental-features = [ "nix-command" "flakes" ];
+          
+          # System identity
+          networking.hostName = hostname;
+          system.stateVersion = 6;
+          system.primaryUser = username;
+          
+          # Security settings
+          security.pam.services.sudo_local.touchIdAuth = true;
+          
+          # System services
+          services.tailscale.enable = true;
+          
+          # User account setup
+          users.users.${username}.home = "/Users/${username}";
+        }
 
-        modules = [
-          # Import the system-level Darwin configuration
-          ./darwin-configuration.nix
+        # ======================================================================
+        # HOMEBREW CONFIGURATION - Add/remove casks here
+        # ======================================================================
+        nix-homebrew.darwinModules.nix-homebrew
+        {
+          nix-homebrew = {
+            enable = true;
+            enableRosetta = true;
+            user = username;
+          };
+          
+          homebrew = {
+            enable = true;
+            onActivation.cleanup = "zap";
+            
+            # GUI Applications - add new apps here
+            casks = [
+              "1password"
+              "1password-cli"
+              "alfred"
+              "alt-tab"
+              "anydesk"
+              "betterdisplay"
+              "bettertouchtool"
+              "brave-browser"
+              "chatgpt"
+              "claude"
+              "discord"
+              "itunes-volume-control"
+              "jetbrains-toolbox"
+              "karabiner-elements"
+              "jordanbaird-ice"
+              "ledger-live"
+              "mos"
+              "notunes"
+              "obs"
+              "obsidian"
+              "omnidisksweeper"
+              "orbstack"
+              "parallels"
+              "proton-mail"
+              "pycharm"
+              "spotify"
+              "synology-drive"
+              "telegram"
+              "todoist-app"
+            ];
+          };
+        }
 
-          # Home Manager module for nix-darwin
-          home-manager.darwinModules.home-manager
-          {
-            # Configure Home Manager itself
-            home-manager = {
-              useGlobalPkgs = true; # Use system nixpkgs for HM, saves evaluation
-              useUserPackages = true; # Install HM packages to /etc/profiles/per-user
-              # Extra special arguments to pass to home.nix, like inputs
-              extraSpecialArgs = { inherit inputs username system; };
-              users.${username} = import ./home.nix;
+        # ======================================================================
+        # HOME MANAGER CONFIGURATION - User packages and dotfiles
+        # ======================================================================
+        home-manager.darwinModules.home-manager
+        {
+          home-manager = {
+            useGlobalPkgs = true;
+            useUserPackages = true;
+            
+            users.${username} = { pkgs, config, ... }: {
+              # User identity
+              home.username = username;
+              home.homeDirectory = "/Users/${username}";
+              home.stateVersion = "25.05";
+              
+              # Command-line tools and utilities - add new packages here
+              home.packages = with pkgs; [
+                # Development tools
+                caddy
+                gh
+                git
+                just
+                neovim
+                ripgrep
+                ruff
+                sqlite
+                terraform
+                uv
+                
+                # System utilities
+                fzf
+                nano
+                tailscale
+                zoxide
+                
+                # Applications
+                iterm2
+                
+                # Fonts
+                nerd-fonts.jetbrains-mono
+              ];
+              
+              # Git configuration - modify these settings as needed
+              programs.git = {
+                enable = true;
+                userName = "scriptogre";
+                userEmail = "git@christiantanul.com";
+                extraConfig = {
+                  core.excludesfile = "${config.home.homeDirectory}/.config/git/ignore";
+                  init.defaultBranch = "master";
+                  pull.rebase = true;
+                };
+              };
+              
+              # Git ignore file
+              home.file.".config/git/ignore".source = ./gitignore;
             };
-          }
+          };
+        }
 
-          # Nix-homebrew module
-          nix-homebrew.darwinModules.nix-homebrew
-          {
-            # Configure nix-homebrew
-            nix-homebrew = {
-              enable = true;
-              enableRosetta = true; # If you need Rosetta for some brews/casks
-              user = username; # Specify the user for Homebrew
-            };
-          }
-
-          # Mac App Util module
-          mac-app-util.darwinModules.default
-          # No specific config needed here unless you override its options
-
-          # Inline module to set primaryUser if not set elsewhere
-          # Though typically system.activationScripts.postActivation might be better
-          # or just ensure your user exists.
-          ({ lib, ... }: {
-            # This ensures nix-darwin knows the primary user, useful for some services
-            # or if you have `users.users.<name>.createHome = true;`
-            # However, Home Manager and nix-homebrew handle the user 'chris' specifically.
-            # This might be redundant if 'chris' is already the logged-in user building this.
-            users.users.${username}.home = "/Users/${username}"; # Ensure user dir is known
-            # system.activationScripts.userActivation.text = ''
-            #   # Ensure the primary user for some system services if needed
-            #   echo "Primary user set to ${username}"
-            # '';
-          })
-
-        ];
-      };
-
-      # Expose Home Manager configurations separately if you want to build them independently
-      # (e.g., for other systems or users not managed by darwinConfigurations)
-      # homeConfigurations."${username}" = home-manager.lib.homeManagerConfiguration {
-      #   pkgs = nixpkgs.legacyPackages.${system};
-      #   extraSpecialArgs = { inherit inputs username; };
-      #   modules = [ ./home.nix ];
-      # };
+        # ======================================================================
+        # MAC APP UTIL - macOS app integration
+        # ======================================================================
+        mac-app-util.darwinModules.default
+      ];
     };
+  };
 }

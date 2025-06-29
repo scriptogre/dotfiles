@@ -1,4 +1,4 @@
-switch:
+switch: update
     sudo darwin-rebuild switch --flake .#macbook
 
 update:

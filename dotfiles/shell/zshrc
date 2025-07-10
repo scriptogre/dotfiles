@@ -1,0 +1,26 @@
+# Shared zsh configuration for all machines
+
+# Oh My Zsh configuration
+export ZSH="$HOME/.oh-my-zsh"
+ZSH_THEME="robbyrussell"
+plugins=(git docker docker-compose)
+source $ZSH/oh-my-zsh.sh
+
+# Docker aliases
+alias dps='docker ps'
+alias dlog='docker logs -f'
+alias dexec='docker exec -it'
+
+# Docker Swarm aliases
+alias swarm-status='docker node ls'
+alias stack-list='docker stack ls'
+alias stack-ps='docker stack ps'
+alias stack-logs='docker service logs -f'
+
+# System aliases
+alias ll='ls -la'
+alias la='ls -A'
+alias l='ls -CF'
+
+# Machine-specific node info (will be overridden per host)
+alias node-info='echo "Node: $(hostname)"'

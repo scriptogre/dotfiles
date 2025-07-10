@@ -1,0 +1,12 @@
+[user]
+	name = scriptogre
+	email = git@christiantanul.com
+
+[core]
+	excludesfile = ~/.config/git/ignore
+
+[init]
+	defaultBranch = master
+
+[pull]
+	rebase = true

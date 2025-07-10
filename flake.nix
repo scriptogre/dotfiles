@@ -1,9 +1,6 @@
 {
-  description = "Chris's macOS configuration with nix-darwin + home-manager";
+  description = "Chris's homelab - environment configuration for all machines";
 
-  # ============================================================================
-  # INPUTS - External flake dependencies
-  # ============================================================================
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     
@@ -21,61 +18,85 @@
     mac-app-util.url = "github:hraban/mac-app-util";
   };
 
-  # ============================================================================
-  # OUTPUTS - System configurations
-  # ============================================================================
   outputs = { nixpkgs, home-manager, nix-darwin, nix-homebrew, mac-app-util, ... }: 
   let
-    # Configuration constants - modify these to customize your setup
-    system = "aarch64-darwin";
-    username = "chris";
-    hostname = "macbook";
+    commonPackages = pkgs: with pkgs; [
+      # Development tools
+      caddy
+      gh
+      git
+      just
+      neovim
+      ripgrep
+      ruff
+      sqlite
+      terraform
+      uv
+      
+      # System utilities
+      curl
+      fzf
+      htop
+      nano
+      tailscale
+      tmux
+      tree
+      wget
+      zoxide
+      
+      # Shell
+      oh-my-zsh
+      zsh
+      
+      # Docker tools
+      docker-compose
+      lazydocker
+    ];
+
+    homeConfig = { pkgs, extraPackages ? [] }: {
+      home.stateVersion = "25.05";
+      
+      # Packages: common + extra per machine
+      home.packages = (commonPackages pkgs) ++ extraPackages;
+      
+      # Shared zsh configuration
+      programs.zsh = {
+        enable = true;
+        enableCompletion = true;
+        autosuggestion.enable = true;
+        syntaxHighlighting.enable = true;
+        initExtra = builtins.readFile ./dotfiles/shell/zshrc;
+      };
+      
+      # Shared dotfiles
+      home.file.".gitconfig".source = ./dotfiles/git/config;
+      home.file.".config/git/ignore".source = ./dotfiles/git/ignore;
+    };
   in
   {
-    darwinConfigurations.${hostname} = nix-darwin.lib.darwinSystem {
-      inherit system;
-      
+    # ========================================================================
+    # macOS System Configuration
+    # ========================================================================
+    darwinConfigurations.macbook = nix-darwin.lib.darwinSystem {
+      system = "aarch64-darwin";
       modules = [
-        # ======================================================================
-        # SYSTEM CONFIGURATION - macOS settings, services, and security
-        # ======================================================================
+        # System configuration
         {
-          # Basic system settings
           nixpkgs.config.allowUnfree = true;
-          nixpkgs.config.allowBroken = true;
           nix.settings.experimental-features = [ "nix-command" "flakes" ];
-          
-          # System identity
-          networking.hostName = hostname;
+          networking.hostName = "macbook";
           system.stateVersion = 6;
-          system.primaryUser = username;
-          
-          # Security settings
-          security.pam.services.sudo_local.touchIdAuth = true;
-          
-          # System services
           services.tailscale.enable = true;
-          
-          # User account setup
-          users.users.${username}.home = "/Users/${username}";
+          users.users.chris.home = "/Users/chris";
         }
 
-        # ======================================================================
-        # HOMEBREW CONFIGURATION - Add/remove casks here
-        # ======================================================================
+        # Homebrew
         nix-homebrew.darwinModules.nix-homebrew
         {
-          nix-homebrew = {
-            enable = true;
-            enableRosetta = true;
-            user = username;
-          };
-          
+          nix-homebrew = { enable = true; enableRosetta = true; user = "chris"; };
           homebrew = {
             enable = true;
             onActivation.cleanup = "zap";
-            
-            # GUI Applications - add new apps here
             casks = [
               "1password"
               "1password-cli"
@@ -110,71 +131,67 @@
           };
         }
 
-        # ======================================================================
-        # HOME MANAGER CONFIGURATION - User packages and dotfiles
-        # ======================================================================
+        # Home Manager
         home-manager.darwinModules.home-manager
         {
-          home-manager = {
-            useGlobalPkgs = true;
-            useUserPackages = true;
-            
-            users.${username} = { pkgs, config, ... }: {
-              # User identity
-              home.username = username;
-              home.homeDirectory = "/Users/${username}";
-              home.stateVersion = "25.05";
-              
-              # Command-line tools and utilities - add new packages here
-              home.packages = with pkgs; [
-                # Development tools
-                caddy
-                gh
-                git
-                just
-                neovim
-                ripgrep
-                ruff
-                sqlite
-                terraform
-                uv
-                
-                # System utilities
-                fzf
-                nano
-                tailscale
-                zoxide
-                
-                # Applications
-                iterm2
-                
-                # Fonts
-                nerd-fonts.jetbrains-mono
-              ];
-              
-              # Git configuration - modify these settings as needed
-              programs.git = {
-                enable = true;
-                userName = "scriptogre";
-                userEmail = "git@christiantanul.com";
-                extraConfig = {
-                  core.excludesfile = "${config.home.homeDirectory}/.config/git/ignore";
-                  init.defaultBranch = "master";
-                  pull.rebase = true;
-                };
-              };
-              
-              # Git ignore file
-              home.file.".config/git/ignore".source = ./gitignore;
-            };
+          home-manager.useGlobalPkgs = true;
+          home-manager.useUserPackages = true;
+          home-manager.users.chris = { pkgs, ... }: (homeConfig {
+            inherit pkgs;
+            extraPackages = with pkgs; [
+              iterm2
+              nerd-fonts.jetbrains-mono
+            ];
+          }) // {
+            home.username = "chris";
+            home.homeDirectory = "/Users/chris";
           };
         }
 
-        # ======================================================================
-        # MAC APP UTIL - macOS app integration
-        # ======================================================================
         mac-app-util.darwinModules.default
       ];
+    };
+
+    # ========================================================================
+    # Home Manager Configurations
+    # ========================================================================
+    homeConfigurations = {
+      # macOS
+      "chris@macbook" = home-manager.lib.homeManagerConfiguration {
+        pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+        modules = [({
+          home.username = "chris";
+          home.homeDirectory = "/Users/chris";
+        } // (homeConfig {
+          pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+          extraPackages = with nixpkgs.legacyPackages.aarch64-darwin; [
+            iterm2
+            nerd-fonts.jetbrains-mono
+          ];
+        }))];
+      };
+
+      # Synology VM
+      "chris@vm" = home-manager.lib.homeManagerConfiguration {
+        pkgs = nixpkgs.legacyPackages.x86_64-linux;
+        modules = [({
+          home.username = "chris";
+          home.homeDirectory = "/home/chris";
+        } // (homeConfig {
+          pkgs = nixpkgs.legacyPackages.x86_64-linux;
+        }))];
+      };
+      
+      # Raspberry Pi 5
+      "chris@pi" = home-manager.lib.homeManagerConfiguration {
+        pkgs = nixpkgs.legacyPackages.aarch64-linux;
+        modules = [({
+          home.username = "chris";
+          home.homeDirectory = "/home/chris";
+        } // (homeConfig {
+          pkgs = nixpkgs.legacyPackages.aarch64-linux;
+        }))];  
+      };
     };
   };
 }

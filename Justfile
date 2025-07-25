@@ -1,8 +1,11 @@
-switch: update
-    sudo darwin-rebuild switch --flake .#macbook
+# Rebuild current host (auto-detect hostname)
+rebuild: update
+    if [[ "$(uname)" == "Darwin" ]]; then \
+        sudo darwin-rebuild switch --flake .; \
+    else \
+        sudo nixos-rebuild switch --flake .; \
+    fi
 
+# Update flakes
 update:
     nix flake update
-
-update-nix-2:
-    nix run github:nix-community/nixos-anywhere -- --flake .#default --target-host chris@192.168.68.111

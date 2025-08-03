@@ -12,6 +12,32 @@ nix-darwin.lib.darwinSystem {
       system.primaryUser = "chris";
       services.tailscale.enable = true;
       users.users.chris.home = "/Users/chris";
+
+      # Safari configuration - only settings that differ from defaults
+      system.activationScripts.configureSafari.text = ''
+        echo "Configuring Safari settings..."
+        
+        # Disable all AutoFill features (we use 1Password)
+        defaults write com.apple.Safari AutoFillCreditCardData -bool false
+        defaults write com.apple.Safari AutoFillFromAddressBook -bool false
+        defaults write com.apple.Safari AutoFillFromiCloudKeychain -bool false
+        defaults write com.apple.Safari AutoFillMiscellaneousForms -bool false
+        defaults write com.apple.Safari AutoFillPasswords -bool false
+        
+        # Developer tools
+        defaults write com.apple.Safari IncludeDevelopMenu -bool true
+        defaults write com.apple.Safari WebKitDeveloperExtrasEnabledPreferenceKey -bool true
+        
+        # Interface preferences
+        defaults write com.apple.Safari ShowFullURLInSmartSearchField -bool true
+        defaults write com.apple.Safari NewTabBehavior -int 1
+        defaults write com.apple.Safari NewWindowBehavior -int 1
+        defaults write com.apple.Safari OpenNewTabsInFront -bool true
+        defaults write com.apple.Safari SuppressSearchSuggestions -bool true
+        defaults write com.apple.Safari ShowStandaloneTabBar -bool false
+
+        echo "Safari settings configured. Restart Safari to apply changes."
+      '';
     }
 
     # Homebrew
@@ -29,9 +55,12 @@ nix-darwin.lib.darwinSystem {
             cleanup = "zap";
             upgrade = true;
         };
+        masApps = {
+          "AdGuard for Safari" = 1440147259;
+          "1Password for Safari" = 1569813296;
+        };
         casks = [
           "1password"
-          "1password-cli"
           "alfred"
           "alt-tab"
           "anydesk"

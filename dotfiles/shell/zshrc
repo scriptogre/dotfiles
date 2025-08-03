@@ -15,6 +15,9 @@ source $ZSH/oh-my-zsh.sh
 # Powerlevel10k settings
 POWERLEVEL9K_PROMPT_ON_NEWLINE=true
 
+# 1Password SSH agent for commit signing
+export SSH_AUTH_SOCK="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+
 alias rsynca='rsync -avzP'
 
 # -----------------------------------------------------------------------------
@@ -52,3 +55,5 @@ finda() {
 
 alias port='f() { lsof -nP -iTCP:"$1" -sTCP:LISTEN 2>/dev/null; }; f'
 alias killport='f() { pid=$(lsof -nP -iTCP:"$1" -sTCP:LISTEN -t 2>/dev/null); if [ "$pid" ]; then kill -9 "$pid" && echo "Killed PID $pid on port $1"; else echo "Nothing on port $1"; fi; }; f'
+
+alias claude='npx @anthropic-ai/claude-code@latest'

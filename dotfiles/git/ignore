@@ -43,3 +43,6 @@ wheels/
 .env.*
 !.env.example
 !.env.template
+
+# Claude folder
+.claude/

@@ -28,6 +28,11 @@
         git
         just
         uv
+        nodejs_24
+        mise
+
+        # Secrets management
+        _1password-cli
         
         # System utilities
         curl
@@ -81,6 +86,7 @@
       # NixOS System Configurations  
       nixosConfigurations = {
         acasa = import ./hosts/acasa.nix sharedArgs;
+        # betania is now a standalone flake in hosts/betania.nix
       };
 
       # Home Manager Configurations

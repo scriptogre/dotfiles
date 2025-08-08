@@ -1,4 +1,4 @@
-{ nixpkgs, home-manager, nix-darwin, nix-homebrew, mac-app-util, commonPackages, homeConfig }:
+{ nixpkgs, home-manager, nix-darwin, nix-homebrew, mac-app-util, commonModule }:
 
 nix-darwin.lib.darwinSystem {
   system = "aarch64-darwin";
@@ -91,6 +91,7 @@ nix-darwin.lib.darwinSystem {
           "synology-drive"
           "telegram"
           "todoist-app"
+          "vibetunnel"
         ];
       };
     }
@@ -101,19 +102,19 @@ nix-darwin.lib.darwinSystem {
       home-manager.useGlobalPkgs = true;
       home-manager.useUserPackages = true;
       home-manager.backupFileExtension = "backup";
-      home-manager.users.chris = { pkgs, ... }: (
+      home-manager.users.chris = { pkgs, ... }: 
+        let
+          common = commonModule { inherit pkgs; };
+        in
         {
-          home.stateVersion = "25.05";
           home.username = "chris";
           home.homeDirectory = "/Users/chris";
-        } // homeConfig {
-          inherit pkgs;
+        } // common.mkHomeConfig {
           extraPackages = with pkgs; [
             iterm2
             nerd-fonts.jetbrains-mono
           ];
-        }
-      );
+        };
     }
 
     mac-app-util.darwinModules.default

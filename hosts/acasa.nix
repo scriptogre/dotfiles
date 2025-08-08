@@ -1,4 +1,4 @@
-{ nixpkgs, home-manager, commonPackages, homeConfig, ... }:
+{ nixpkgs, home-manager, nix-darwin, nix-homebrew, mac-app-util, commonModule }:
 
 nixpkgs.lib.nixosSystem {
   system = "x86_64-linux";
@@ -134,13 +134,17 @@ nixpkgs.lib.nixosSystem {
       };
 
       # Install packages (combine common packages with host-specific ones)
-      environment.systemPackages = (commonPackages pkgs) ++ (with pkgs; [
-        gemini-cli
-        dnsutils
-        ethtool
-        iproute2
-        coreutils
-      ]);
+      environment.systemPackages = 
+        let
+          common = commonModule { pkgs = pkgs; };
+        in
+        common.packages ++ (with pkgs; [
+          gemini-cli
+          dnsutils
+          ethtool
+          iproute2
+          coreutils
+        ]);
 
       # Boot configuration
       boot.loader = {

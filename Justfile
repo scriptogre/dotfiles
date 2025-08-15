@@ -1,11 +1,4 @@
-# Rebuild current host (auto-detect hostname)
-rebuild: update
-    if [[ "$(uname)" == "Darwin" ]]; then \
-        sudo darwin-rebuild switch --flake .; \
-    else \
-        sudo nixos-rebuild switch --flake .; \
-    fi
-
-# Update flakes
-update:
+# Rebuild current host
+rebuild:
     nix flake update
+    sudo darwin-rebuild switch --flake .

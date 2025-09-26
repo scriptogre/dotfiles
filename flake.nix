@@ -136,6 +136,13 @@
               nano
               tailscale
               wget
+              bat      # alternative to `cat`
+              ripgrep  # alternative to `grep`
+              eza      # alternative to `ls`
+              rip2     # alternative to `rm`
+              xh       # alternative to `curl`
+              fd       # alternative to `find`
+              micro    # alternative to `nano`
 
               # Shell
               oh-my-zsh

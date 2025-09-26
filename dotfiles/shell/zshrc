@@ -56,4 +56,12 @@ finda() {
 alias port='f() { lsof -nP -iTCP:"$1" -sTCP:LISTEN 2>/dev/null; }; f'
 alias killport='f() { pid=$(lsof -nP -iTCP:"$1" -sTCP:LISTEN -t 2>/dev/null); if [ "$pid" ]; then kill -9 "$pid" && echo "Killed PID $pid on port $1"; else echo "Nothing on port $1"; fi; }; f'
 
+alias cat='bat --paging=never'
+alias ls='eza --tree --level=1 --icons=always'
+alias nano='micro'
+
+alias rm="echo Use 'rip' instead of rm."
+alias curl="echo Use 'xh' instead of curl."
+alias find="echo Use 'fd' instead of find."
+
 eval "$(direnv hook zsh)"

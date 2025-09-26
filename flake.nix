@@ -70,6 +70,7 @@
               "lm-studio"
               "mos"
               "notunes"
+              "nordvpn"
               "obs"
               "obsidian"
               "omnidisksweeper"

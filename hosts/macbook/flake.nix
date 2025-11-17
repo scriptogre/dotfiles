@@ -62,11 +62,11 @@
               "discord"
               "firefox"
               "google-chrome"
-              "itunes-volume-control"
+              "volume-control"
               "jetbrains-toolbox"
               "karabiner-elements"
               "jordanbaird-ice"
-              "ledger-live"
+              "ledger-wallet"
               "lm-studio"
               "mos"
               "notunes"
@@ -94,63 +94,14 @@
           home-manager.useUserPackages = true;
           home-manager.backupFileExtension = "backup";
           home-manager.users.chris = { pkgs, ... }: {
+            imports = [ ../../common/home.nix ];
+
             home.username = "chris";
             home.homeDirectory = "/Users/chris";
-            home.stateVersion = "25.05";
 
-            # Shared zsh configuration
-            programs.zsh = {
-              enable = true;
-              enableCompletion = true;
-              autosuggestion.enable = true;
-              syntaxHighlighting.enable = true;
-              initContent = builtins.readFile ./dotfiles/shell/zshrc;
-            };
-
-            programs.direnv = {
-              enable = true;
-              nix-direnv.enable = true;
-            };
-
-            # Shared dotfiles
-            home.file.".gitconfig".source = ./dotfiles/git/config;
-            home.file.".config/git/ignore".source = ./dotfiles/git/ignore;
-
+            # macOS-specific packages
             home.packages = with pkgs; [
-              # Development tools
-              caddy
-              gh
-              git
-              just
-              uv
-              nodejs_24
-              mise
-              gemini-cli
-              claude-code
-
-              # Secrets management
-              _1password-cli
-
-              # System utilities
-              curl
-              htop
-              nano
-              tailscale
-              wget
-              bat      # alternative to `cat`
-              ripgrep  # alternative to `grep`
-              eza      # alternative to `ls`
-              rip2     # alternative to `rm`
-              xh       # alternative to `curl`
-              fd       # alternative to `find`
-              micro    # alternative to `nano`
-
-              # Shell
-              oh-my-zsh
-
-              # Extra packages
               iterm2
-              nerd-fonts.jetbrains-mono
             ];
           };
         }

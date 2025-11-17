@@ -1,0 +1,144 @@
+# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
+# Oh-My-Zsh setup
+export ZSH="$HOME/.oh-my-zsh"
+ZSH_THEME="powerlevel10k/powerlevel10k"
+plugins=(git)
+source $ZSH/oh-my-zsh.sh
+
+# Load p10k configuration if it exists
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+# Powerlevel10k settings
+POWERLEVEL9K_PROMPT_ON_NEWLINE=true
+
+# 1Password SSH agent for commit signing
+export SSH_AUTH_SOCK="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+
+alias rsynca='rsync -avzP'
+
+# -----------------------------------------------------------------------------
+# finda: search for filenames or directory names locally or on a remote host,
+# and allow Ctrl+C to interrupt both local and remote searches.
+# Usage: finda [<host>:]<path> <pattern>
+# Example (local):  finda . foobar
+# Example (remote): finda expert_systems:/home/usergpu foobar
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# finda: search for filenames or directory names locally or on a remote host,
+# allowing Ctrl+C to interrupt without killing your shell.
+# Usage: finda [<host>:]<path> <pattern>
+# Example (local):  finda . foobar
+# Example (remote): finda expert_systems:/home/usergpu foobar
+# -----------------------------------------------------------------------------
+finda() {
+  if [[ $# -lt 2 ]]; then
+    echo "Usage: finda [<host>:]<path> <pattern>"
+    return 1
+  fi
+
+  local TARGET="$1"
+  local PATTERN="$2"
+
+  # Note: using only -iname "*$PATTERN*" will match both files and directories.
+  if [[ "$TARGET" == *:* ]]; then
+    local HOST="${TARGET%%:*}"
+    local REMOTE_PATH="${TARGET#*:}"
+    ssh "$HOST" "find '$REMOTE_PATH' -iname '*$PATTERN*' 2>/dev/null"
+  else
+    find "$TARGET" -iname "*$PATTERN*" 2>/dev/null
+  fi
+}
+
+alias port='f() { lsof -nP -iTCP:"$1" -sTCP:LISTEN 2>/dev/null; }; f'
+alias killport='f() { pid=$(lsof -nP -iTCP:"$1" -sTCP:LISTEN -t 2>/dev/null); if [ "$pid" ]; then kill -9 "$pid" && echo "Killed PID $pid on port $1"; else echo "Nothing on port $1"; fi; }; f'
+
+alias cat='bat --paging=never'
+alias ls='eza --tree --level=1 --icons=always --all'
+alias nano='micro'
+
+alias rm="echo Use 'rip' instead of rm."
+alias find="echo Use 'fd' instead of find."
+
+compress() {
+  [[ -z "$1" || ! -f "$1" ]] && { echo "Usage: compress <input> [output]"; return 1; }
+
+  in="$1"
+  out="${2:-${in%.*}_compressed.${in##*.}}"
+  ext_in="${in##*.}"
+  ext_out="${out##*.}"
+
+  case "$ext_in" in
+    mp4|mov|mkv|avi|webm)
+      echo "Compressing video: $in → $out"
+      ffmpeg -i "$in" -vf "scale=-2:1080:flags=lanczos" -c:v libx264 -preset slow -crf 23 \
+             -c:a aac -b:a 128k -movflags +faststart "$out" -y ;;
+    png)
+      echo "Compressing PNG: $in → $out"
+      # Get original size
+      size_before=$(stat -f%z "$in" 2>/dev/null || stat -c%s "$in" 2>/dev/null)
+
+      # Step 1: Lossy compression with pngquant
+      temp_pngquant="${out%.png}-temp.png"
+      pngquant --quality 65-80 --speed 1 --strip --skip-if-larger "$in" --output "$temp_pngquant" 2>/dev/null
+
+      # If pngquant succeeded, use its output; otherwise use original
+      if [[ -f "$temp_pngquant" ]]; then
+        pngquant_input="$temp_pngquant"
+      else
+        echo "⚠️  pngquant skipped (would increase size), proceeding with original"
+        pngquant_input="$in"
+      fi
+
+      # Step 2: Lossless compression with oxipng
+      oxipng -o max --strip safe --alpha "$pngquant_input" --out "$out" 2>/dev/null
+
+      # Cleanup temp file
+      [[ -f "$temp_pngquant" ]] && rip "$temp_pngquant"
+
+      # Calculate size reduction
+      if [[ -f "$out" ]]; then
+        size_after=$(stat -f%z "$out" 2>/dev/null || stat -c%s "$out" 2>/dev/null)
+        size_diff=$((size_before - size_after))
+
+        # Convert to human readable
+        size_before_hr=$(numfmt --to=iec-i --suffix=B $size_before 2>/dev/null || echo "$size_before bytes")
+        size_after_hr=$(numfmt --to=iec-i --suffix=B $size_after 2>/dev/null || echo "$size_after bytes")
+        size_diff_hr=$(numfmt --to=iec-i --suffix=B $size_diff 2>/dev/null || echo "$size_diff bytes")
+
+        # Calculate percentage (multiply before divide to avoid zero)
+        percent_reduction=$((size_diff * 100 / size_before))
+
+        echo "📊 $size_before_hr → $size_after_hr (saved $size_diff_hr, -${percent_reduction}%)"
+      fi
+      ;;
+    jpg|jpeg|webp|gif)
+      echo "Compressing image: $in → $out"
+      size_before=$(stat -f%z "$in" 2>/dev/null || stat -c%s "$in" 2>/dev/null)
+
+      magick "$in" -strip -interlace Plane -quality 85 "$out"
+
+      if [[ -f "$out" ]]; then
+        size_after=$(stat -f%z "$out" 2>/dev/null || stat -c%s "$out" 2>/dev/null)
+        size_diff=$((size_before - size_after))
+
+        size_before_hr=$(numfmt --to=iec-i --suffix=B $size_before 2>/dev/null || echo "$size_before bytes")
+        size_after_hr=$(numfmt --to=iec-i --suffix=B $size_after 2>/dev/null || echo "$size_after bytes")
+        size_diff_hr=$(numfmt --to=iec-i --suffix=B $size_diff 2>/dev/null || echo "$size_diff bytes")
+
+        percent_reduction=$((size_diff * 100 / size_before))
+
+        echo "📊 $size_before_hr → $size_after_hr (saved $size_diff_hr, -${percent_reduction}%)"
+      fi
+      ;;
+    *)
+      echo "Unsupported file type: $ext_in"; return 1 ;;
+  esac
+
+  [[ $? -eq 0 ]] && echo "✅ Done: $out" || echo "❌ Failed."
+}
+
+eval "$(direnv hook zsh)"

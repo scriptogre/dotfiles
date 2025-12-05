@@ -166,7 +166,7 @@ commit() {
 
   # Use Claude Code to analyze changes and create commit
   echo "🤖 Analyzing changes and creating commit..."
-  claude "Create a git commit with the current changes. First, look at recent commit messages (git log) to understand the commit message style and pattern used in this repository. Then write a clear, concise commit message that follows the same pattern and style. The message should describe what capabilities or features now exist (not the development process). Keep it short and focused."
+  claude "Create a git commit with the current changes. First, look at recent commit messages (git log) to understand the commit message style and pattern used in this repository. Then write a clear, concise commit message that follows the same pattern and style. The message should describe what capabilities or features now exist (not the development process). Keep it short and focused. After creating the commit, push it to the remote repository."
 }
 
 eval "$(direnv hook zsh)"

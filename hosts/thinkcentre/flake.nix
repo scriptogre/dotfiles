@@ -22,7 +22,6 @@
           home-manager.useUserPackages = true;
           home-manager.users.chris = { pkgs, ... }: {
             imports = [ ../../common/home.nix ];
-
             home.username = "chris";
             home.homeDirectory = "/home/chris";
           };

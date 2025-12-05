@@ -1,6 +1,9 @@
 { pkgs, ... }: {
   home.stateVersion = "25.05";
 
+  # Disable nix management in home-manager (Determinate Nix manages this)
+  nix.enable = false;
+
   # Shared zsh configuration
   programs.zsh = {
     enable = true;
@@ -22,7 +25,7 @@
     git
     just
     uv
-    gemini-cli
+    gemini-cli-bin
     claude-code
     nodejs_20
     deno
@@ -42,8 +45,6 @@
     bat      # alternative to `cat`
     ripgrep  # alternative to `grep`
     eza      # alternative to `ls`
-    rip2     # alternative to `rm`
-    fd       # alternative to `find`
     micro    # alternative to `nano`
     imagemagick
     ffmpeg

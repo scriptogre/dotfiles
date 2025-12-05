@@ -57,11 +57,8 @@ alias port='f() { lsof -nP -iTCP:"$1" -sTCP:LISTEN 2>/dev/null; }; f'
 alias killport='f() { pid=$(lsof -nP -iTCP:"$1" -sTCP:LISTEN -t 2>/dev/null); if [ "$pid" ]; then kill -9 "$pid" && echo "Killed PID $pid on port $1"; else echo "Nothing on port $1"; fi; }; f'
 
 alias cat='bat --paging=never'
-alias ls='eza --tree --level=1 --icons=always --all'
+alias ls='eza --tree --level=1 --icons=always'
 alias nano='micro'
-
-alias rm="echo Use 'rip' instead of rm."
-alias find="echo Use 'fd' instead of find."
 
 compress() {
   [[ -z "$1" || ! -f "$1" ]] && { echo "Usage: compress <input> [output]"; return 1; }
@@ -139,6 +136,37 @@ compress() {
   esac
 
   [[ $? -eq 0 ]] && echo "✅ Done: $out" || echo "❌ Failed."
+}
+
+removebg() {
+  [[ -z "$1" || ! -f "$1" ]] && { echo "Usage: removebg <input> [output]"; return 1; }
+
+  in="$1"
+  out="${2:-${in%.*}_nobg.png}"
+
+  echo "Removing background: $in → $out"
+  uv tool run --python 3.11 'rembg[cli,cpu]' i "$in" "$out"
+
+  [[ $? -eq 0 ]] && echo "✅ Done: $out" || echo "❌ Failed."
+}
+
+# Auto-commit function that generates commit messages using Claude
+commit() {
+  # Check if we're in a git repo
+  if ! git rev-parse --git-dir > /dev/null 2>&1; then
+    echo "❌ Not in a git repository"
+    return 1
+  fi
+
+  # Check if there are changes to commit
+  if git diff --quiet && git diff --cached --quiet; then
+    echo "ℹ️  No changes to commit"
+    return 0
+  fi
+
+  # Use Claude Code to analyze changes and create commit
+  echo "🤖 Analyzing changes and creating commit..."
+  claude "Create a git commit with the current changes. First, look at recent commit messages (git log) to understand the commit message style and pattern used in this repository. Then write a clear, concise commit message that follows the same pattern and style. The message should describe what capabilities or features now exist (not the development process). Keep it short and focused."
 }
 
 eval "$(direnv hook zsh)"

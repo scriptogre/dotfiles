@@ -52,9 +52,28 @@
               host = config.networking.hostName;
               home = config.users.users.${config.system.primaryUser}.home;
               repoPath = "${home}/Projects/dotfiles";
-              # -------------------------------
+              nix = "/nix/var/nix/profiles/default/bin/nix";
+              darwin-rebuild = "/run/current-system/sw/bin/darwin-rebuild";
+              logFile = "${home}/Library/Logs/nix-daily-update.log";
             in ''
-              /usr/bin/osascript -e 'tell app "iTerm2" to create window with default profile command "zsh -c \"cd ${repoPath} && nix flake update --flake ./hosts/${host} && sudo darwin-rebuild switch --flake ./hosts/${host}#${host}; zsh\""'
+              # Add git and other tools to path
+              export PATH="/etc/profiles/per-user/${config.system.primaryUser}/bin:$PATH"
+              
+              echo "Starting daily update at $(date)" >> ${logFile}
+              cd ${repoPath}
+              
+              if ${nix} flake update --flake ./hosts/${host} >> ${logFile} 2>&1; then
+                if sudo ${darwin-rebuild} switch --flake ./hosts/${host}#${host} >> ${logFile} 2>&1; then
+                  echo "Update successful at $(date)" >> ${logFile}
+                  /usr/bin/osascript -e 'display notification "System updated successfully" with title "Daily Update"'
+                else
+                  echo "Rebuild failed at $(date)" >> ${logFile}
+                  /usr/bin/osascript -e 'display notification "Darwin rebuild failed. Check ${logFile}" with title "Daily Update" subtitle "Failure"'
+                fi
+              else
+                echo "Flake update failed at $(date)" >> ${logFile}
+                /usr/bin/osascript -e 'display notification "Flake update failed. Check ${logFile}" with title "Daily Update" subtitle "Failure"'
+              fi
             '';
           };
         })

@@ -55,13 +55,27 @@
               nix = "/nix/var/nix/profiles/default/bin/nix";
               darwin-rebuild = "/run/current-system/sw/bin/darwin-rebuild";
               logFile = "${home}/Library/Logs/nix-daily-update.log";
+              brew = "/opt/homebrew/bin/brew";
             in ''
               # Add git and other tools to path
               export PATH="/etc/profiles/per-user/${config.system.primaryUser}/bin:$PATH"
-              
+
               echo "Starting daily update at $(date)" >> ${logFile}
               cd ${repoPath}
-              
+
+              # Quit running apps that need updates
+              echo "Checking for running apps that need updates..." >> ${logFile}
+              RUNNING_APPS=("Brave Browser" "Google Chrome" "Firefox" "Discord" "Spotify" "Obsidian" "Telegram")
+              for app in "''${RUNNING_APPS[@]}"; do
+                if pgrep -x "$app" > /dev/null; then
+                  echo "Quitting $app for updates..." >> ${logFile}
+                  osascript -e "quit app \"$app\"" 2>> ${logFile} || true
+                fi
+              done
+
+              # Wait a moment for apps to quit gracefully
+              sleep 5
+
               if ${nix} flake update --flake ./hosts/${host} >> ${logFile} 2>&1; then
                 if sudo ${darwin-rebuild} switch --flake ./hosts/${host}#${host} >> ${logFile} 2>&1; then
                   echo "Update successful at $(date)" >> ${logFile}

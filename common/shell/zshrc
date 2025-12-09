@@ -164,9 +164,17 @@ commit() {
     return 0
   fi
 
+  # Get recent commit messages for pattern detection
+  local recent_commits=$(git log -10 --pretty=format:"%s" 2>/dev/null | head -n 10)
+
   # Use Claude Code to analyze changes and create commit
   echo "🤖 Analyzing changes and creating commit..."
-  claude "Create a git commit with the current changes. First, look at recent commit messages (git log) to understand the commit message style and pattern used in this repository. Then write a clear, concise commit message that follows the same pattern and style. The message should describe what capabilities or features now exist (not the development process). Keep it short and focused. After creating the commit, push it to the remote repository."
+  claude "Create a git commit with the current changes and push it to the remote repository.
+
+Recent commit messages from this repository (for pattern detection):
+${recent_commits}
+
+If the recent commits follow a clean, consistent pattern, match that style. Otherwise, use a short, concise imperative sentence starting with a titlecase verb (e.g., 'Add ...', 'Update ...', 'Fix ...'). The message should describe what capabilities or features now exist (not the development process). Keep it focused and professional."
 }
 
 eval "$(direnv hook zsh)"

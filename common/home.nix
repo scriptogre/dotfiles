@@ -13,6 +13,8 @@
     initContent = builtins.readFile ./shell/zshrc;
   };
 
+  services.syncthing.enable = true;
+
   # Shared dotfiles
   home.file.".gitconfig".source = ./git/config;
   home.file.".config/git/ignore".source = ./git/ignore;
@@ -25,7 +27,7 @@
     git
     just
     uv
-    gemini-cli-bin
+    gemini-cli
     claude-code
     nodejs_20
     deno

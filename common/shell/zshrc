@@ -178,3 +178,6 @@ If the recent commits follow a clean, consistent pattern, match that style. Othe
 }
 
 eval "$(direnv hook zsh)"
+
+# vast.ai sunshine game streaming
+source "$HOME/Projects/dotfiles/common/shell/sunshine.zsh"

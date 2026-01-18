@@ -298,6 +298,24 @@ sudo -u user XDG_RUNTIME_DIR=/run/user/$(id -u user) systemctl --user start suns
       ssh -p "$ssh_port" "root@$ssh_host"
       ;;
 
+    logs)
+      if ! _sunshine_has_instance; then
+        echo "No active instance"
+        return 1
+      fi
+
+      local ssh_host=$(_sunshine_get_field "ssh_host")
+      local ssh_port=$(_sunshine_get_field "ssh_port")
+
+      if [[ -z "$ssh_host" || -z "$ssh_port" ]]; then
+        echo "Instance not ready yet (no SSH info)"
+        return 1
+      fi
+
+      echo "Fetching logs from ${C}$ssh_host:$ssh_port${RST}..."
+      ssh -p "$ssh_port" "root@$ssh_host" 'echo "=== ON-START SCRIPT LOG ===" && cat /var/log/onstart.log 2>/dev/null || echo "(not found)" && echo "" && echo "=== SUNSHINE SERVICE ===" && (sudo -u user XDG_RUNTIME_DIR=/run/user/$(id -u user) journalctl --user -u sunshine -n 50 --no-pager 2>/dev/null || journalctl -u sunshine -n 50 --no-pager 2>/dev/null || echo "(no systemd logs)") && echo "" && echo "=== SUNSHINE CONFIG ===" && cat /home/user/.config/sunshine/sunshine.conf 2>/dev/null || echo "(not found)" && echo "" && echo "=== SUNSHINE PROCESS ===" && pgrep -a sunshine || echo "(not running)"'
+      ;;
+
     ip)
       if ! _sunshine_has_instance; then
         echo "No active instance"
@@ -319,18 +337,18 @@ sudo -u user XDG_RUNTIME_DIR=/run/user/$(id -u user) systemctl --user start suns
         return 1
       fi
 
+      echo "Opening vast.ai dashboard..."
+      open "https://cloud.vast.ai/instances/"
+
       local ip=$(_sunshine_get_field "public_ipaddr")
       if [[ -z "$ip" ]]; then
         local status=$(_sunshine_get_field "actual_status")
         echo "Instance loading (status: ${Y}${status:-unknown}${RST})"
-        echo "Opening vast.ai dashboard..."
-        open "https://cloud.vast.ai/instances/"
-        return 0
+      else
+        local url="https://${ip}:47990"
+        echo "Opening Sunshine UI: ${C}$url${RST}"
+        open "$url"
       fi
-
-      local url="https://${ip}:47990"
-      echo "Opening ${C}$url${RST}"
-      open "$url"
       ;;
 
     search)
@@ -406,8 +424,9 @@ sudo -u user XDG_RUNTIME_DIR=/run/user/$(id -u user) systemctl --user start suns
       echo "  ${C}status${RST}    Show instance details + running cost"
       echo "  ${C}search${RST}    List top offers (non-interactive)"
       echo "  ${C}ssh${RST}       SSH into running instance"
+      echo "  ${C}logs${RST}      Show on-start script + Sunshine logs"
       echo "  ${C}ip${RST}        Print instance public IP"
-      echo "  ${C}open${RST}      Open Sunshine web UI in browser"
+      echo "  ${C}open${RST}      Open dashboard + Sunshine web UI"
       echo "  ${C}<ID>${RST}      Create instance from specific offer ID"
       echo ""
       echo "Scoring prioritizes: location (EU) > value (perf/\$) > network > reliability"

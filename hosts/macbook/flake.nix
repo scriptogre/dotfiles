@@ -114,7 +114,7 @@
               "betterdisplay"
               "bettertouchtool"
               "brave-browser"
-              "chatgpt"
+              "codex"
               "claude"
               "discord"
               "firefox"

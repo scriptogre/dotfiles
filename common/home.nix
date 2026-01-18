@@ -39,6 +39,7 @@
     _1password-cli
 
     # System utilities
+    fzf
     curl
     htop
     nano

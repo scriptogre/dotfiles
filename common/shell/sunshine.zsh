@@ -3,7 +3,7 @@
 
 sunshine() {
   # ANSI colors
-  local R=$'\033[31m' G=$'\033[32m' Y=$'\033[33m' B=$'\033[34m' C=$'\033[36m' W=$'\033[37m' RST=$'\033[0m'
+  local R=$'\033[31m' G=$'\033[32m' Y=$'\033[33m' B=$'\033[34m' C=$'\033[36m' W=$'\033[37m' DIM=$'\033[2m' RST=$'\033[0m'
 
   local ONSTART='#!/bin/bash
 ufw disable 2>/dev/null || true
@@ -46,7 +46,6 @@ sudo -u user XDG_RUNTIME_DIR=/run/user/$(id -u user) systemctl --user start suns
   }
 
   _sunshine_get_field() {
-    # Get a specific field from the first instance, sanitizing control characters
     local field="$1"
     uvx vastai show instances --raw 2>/dev/null | perl -pe 's/[\x00-\x08\x0b\x0c\x0e-\x1f]//g' | jq -r "if length > 0 then .[0].${field} // empty else empty end" 2>/dev/null
   }
@@ -57,68 +56,187 @@ sudo -u user XDG_RUNTIME_DIR=/run/user/$(id -u user) systemctl --user start suns
   }
 
   _sunshine_instances_json() {
-    # Get sanitized instances JSON for commands that need the full list
     uvx vastai show instances --raw 2>/dev/null | perl -pe 's/[\x00-\x08\x0b\x0c\x0e-\x1f]//g'
   }
 
-  # jq scoring functions (reused across commands)
-  local JQ_SCORE_FUNCS='
-    def loc_score:
-      if .geolocation | test("HU|RO|BG") then 100
-      elif .geolocation | test("AT|SK|CZ|PL") then 80
-      elif .geolocation | test("DE|NL|DK|SE") then 60
-      elif .geolocation | test("GB|FR|BE") then 40
-      else 0 end;
-    def gpu_score:
+  # Improved scoring with value-based GPU rating and location tiers
+  # Location is a MULTIPLIER so non-EU can never beat EU unless dramatically better
+  local JQ_SCORE='
+    # Location tiers based on latency from Timisoara, Romania
+    def loc_tier:
+      if .geolocation | test("RO|HU|BG|RS|MD") then 1
+      elif .geolocation | test("AT|SK|CZ|PL|UA|HR|SI") then 2
+      elif .geolocation | test("DE|NL|DK|SE|IT|CH|BE|FR") then 3
+      elif .geolocation | test("GB|ES|PT|NO|FI") then 4
+      else 5 end;
+
+    # Location multiplier (non-EU gets heavily penalized)
+    def loc_mult:
+      if loc_tier == 1 then 1.0
+      elif loc_tier == 2 then 0.9
+      elif loc_tier == 3 then 0.8
+      elif loc_tier == 4 then 0.5
+      else 0.2 end;
+
+    # GPU performance tier (relative gaming perf, includes AMD + pro cards)
+    def gpu_perf:
+      # NVIDIA RTX 50 series
       if .gpu_name | test("5090") then 100
-      elif .gpu_name | test("5080") then 95
-      elif .gpu_name | test("4090") then 90
-      elif .gpu_name | test("5070.*Ti|5070S") then 85
-      elif .gpu_name | test("4080.*S|4080S") then 82
-      elif .gpu_name | test("4080") then 78
-      elif .gpu_name | test("5070") then 75
-      elif .gpu_name | test("4070.*S.*Ti|4070S.*Ti") then 70
-      elif .gpu_name | test("4070.*Ti|4070Ti") then 65
-      elif .gpu_name | test("4070.*S|4070S") then 60
-      elif .gpu_name | test("4070") then 55
-      elif .gpu_name | test("3090") then 45
-      elif .gpu_name | test("3080") then 35
+      elif .gpu_name | test("5080") then 80
+      elif .gpu_name | test("5070.*Ti") then 60
+      elif .gpu_name | test("5070") then 50
+      # NVIDIA RTX 40 series
+      elif .gpu_name | test("4090") then 75
+      elif .gpu_name | test("4080.*S|4080S") then 58
+      elif .gpu_name | test("4080") then 55
+      elif .gpu_name | test("4070.*Ti.*S|4070.*S.*Ti") then 48
+      elif .gpu_name | test("4070.*Ti|4070Ti") then 45
+      elif .gpu_name | test("4070.*S|4070S") then 42
+      elif .gpu_name | test("4070") then 38
+      # NVIDIA RTX 30 series
+      elif .gpu_name | test("3090.*Ti") then 38
+      elif .gpu_name | test("3090") then 35
+      elif .gpu_name | test("3080.*Ti") then 32
+      elif .gpu_name | test("3080") then 30
+      elif .gpu_name | test("3070.*Ti") then 26
+      elif .gpu_name | test("3070") then 24
+      # AMD RX 7000 series
+      elif .gpu_name | test("7900.*XTX") then 70
+      elif .gpu_name | test("7900.*XT|7900XT") then 55
+      elif .gpu_name | test("7900.*GRE") then 48
+      elif .gpu_name | test("7800.*XT") then 45
+      elif .gpu_name | test("7700.*XT") then 38
+      elif .gpu_name | test("7600") then 30
+      # AMD RX 6000 series
+      elif .gpu_name | test("6950.*XT") then 45
+      elif .gpu_name | test("6900.*XT") then 42
+      elif .gpu_name | test("6800.*XT") then 38
+      elif .gpu_name | test("6800") then 32
+      elif .gpu_name | test("6700.*XT") then 28
+      # NVIDIA Pro (RTX A-series with NVENC)
+      elif .gpu_name | test("A6000") then 50
+      elif .gpu_name | test("A5500") then 45
+      elif .gpu_name | test("A5000") then 42
+      elif .gpu_name | test("A4500") then 38
+      elif .gpu_name | test("A4000") then 32
+      elif .gpu_name | test("L40S") then 70
+      elif .gpu_name | test("L40") then 65
       else 0 end;
-    def price_score: if .dph_total <= 0.25 then ((0.25 - .dph_total) / 0.25 * 100) else 0 end;
-    def net_score: ([.inet_down, 1000] | min) / 10;
-    def rel_score: .reliability * 50;
-    def total_score: (loc_score * 3) + (gpu_score * 2.5) + (price_score * 2) + net_score + rel_score;
+
+    # Value score: performance per dollar, capped to prevent extreme outliers
+    def value_score:
+      if .dph_total > 0 and gpu_perf > 0 then
+        [(gpu_perf / .dph_total), 500] | min
+      else 0 end;
+
+    # Network score with diminishing returns
+    def net_score:
+      if .inet_down >= 800 then 100
+      elif .inet_down >= 500 then 80
+      elif .inet_down >= 400 then 60
+      else 40 end;
+
+    # Location score for display (not used in total)
+    def loc_score:
+      if loc_tier == 1 then 100
+      elif loc_tier == 2 then 75
+      elif loc_tier == 3 then 50
+      elif loc_tier == 4 then 25
+      else 5 end;
+
+    # Combined score: base score * location multiplier
+    # Base = value + network + reliability bonus
+    # Then multiplied by location (EU stays high, non-EU gets crushed)
+    def total_score:
+      ((value_score + net_score + (.reliability * 50)) * loc_mult);
   '
+
+  _sunshine_search_json() {
+    uvx vastai search offers \
+      'vms_enabled=true disk_space>=100 cpu_ram>=16 inet_down>=400 dph<0.40 reliability>0.9' \
+      --raw 2>/dev/null
+  }
+
+  _sunshine_format_offers() {
+    local offers="$1"
+    echo "$offers" | jq -r "$JQ_SCORE"'
+      [.[] | select(gpu_perf > 0) | {
+        id,
+        gpu: .gpu_name,
+        loc: (.geolocation | split(",")[0] | if . == "" then "Unknown" else . end),
+        price: .dph_total,
+        net: .inet_down,
+        score: total_score,
+        loc_t: loc_tier,
+        gpu_p: gpu_perf,
+        val: value_score,
+        net_s: net_score
+      }] | sort_by(-.score) | .[:20][] |
+      "\(.id)|\(.gpu)|\(.loc)|\(.price)|\(.net | floor)|\(.score | floor)|\(.loc_t)|\(.gpu_p)|\(.val | floor)|\(.net_s)"
+    '
+  }
+
+  _sunshine_colorize_line() {
+    local id="$1" gpu="$2" loc="$3" price="$4" net="$5" score="$6" loc_t="$7" gpu_p="$8" val="$9" net_s="${10}"
+
+    # Location color based on tier
+    local loc_c
+    case "$loc_t" in
+      1) loc_c="$G" ;;
+      2) loc_c="$Y" ;;
+      3) loc_c="$Y" ;;
+      *) loc_c="$R" ;;
+    esac
+
+    # GPU color based on performance tier
+    local gpu_c
+    if (( gpu_p >= 55 )); then gpu_c="$G"
+    elif (( gpu_p >= 38 )); then gpu_c="$Y"
+    else gpu_c="$R"; fi
+
+    # Value color (higher = better deal)
+    local val_c
+    if (( val >= 300 )); then val_c="$G"
+    elif (( val >= 150 )); then val_c="$Y"
+    else val_c="$R"; fi
+
+    # Network color
+    local net_c
+    if (( net_s >= 80 )); then net_c="$G"
+    elif (( net_s >= 60 )); then net_c="$Y"
+    else net_c="$R"; fi
+
+    local price_fmt=$(printf "%.2f" "$price")
+
+    printf "%s|${gpu_c}%-12s${RST}|${loc_c}%-12s${RST}|${val_c}\$%s/hr${RST}|${net_c}%4sMbps${RST}|${DIM}score:%s${RST}" \
+      "$id" "$gpu" "$loc" "$price_fmt" "$net" "$score"
+  }
 
   case "$1" in
     up)
+      # Auto-select best offer
       echo "Finding best offer..."
-      local offers=$(uvx vastai search offers \
-        'vms_enabled=true disk_space>=100 cpu_ram>=16 inet_down>=400 dph<0.35 reliability>0.9' \
-        --raw 2>/dev/null)
+      local offers=$(_sunshine_search_json)
 
       if [[ -z "$offers" || "$offers" == "[]" ]]; then
-        echo "No offers found"
+        echo "${R}No offers found${RST}"
         return 1
       fi
 
-      local best=$(echo "$offers" | jq -r "$JQ_SCORE_FUNCS"'
-        [.[] | select(gpu_score > 0) | . + {score: total_score}] | sort_by(-.score) | .[0] |
-        "\(.id)|\(.gpu_name)|\(.geolocation | split(",")[0])|\(.dph_total)|\(.score)"
+      local best=$(echo "$offers" | jq -r "$JQ_SCORE"'
+        [.[] | select(gpu_perf > 0) | . + {score: total_score}] | sort_by(-.score) | .[0] |
+        "\(.id)|\(.gpu_name)|\(.geolocation | split(",")[0])|\(.dph_total)|\(.score | floor)"
       ')
 
       if [[ -z "$best" || "$best" == "null" ]]; then
-        echo "No suitable offers found (need RTX 30/40/50 series)"
+        echo "${R}No suitable offers found${RST}"
         return 1
       fi
 
-      local id=$(echo "$best" | cut -d'|' -f1)
-      local gpu=$(echo "$best" | cut -d'|' -f2)
-      local loc=$(echo "$best" | cut -d'|' -f3)
-      local price=$(echo "$best" | cut -d'|' -f4)
-      local score=$(echo "$best" | cut -d'|' -f5 | cut -d'.' -f1)
+      IFS='|' read -r id gpu loc price score <<< "$best"
+      local price_fmt=$(printf "%.2f" "$price")
 
-      echo "Best: ${C}$gpu${RST} in ${G}$loc${RST} @ ${Y}\$${price}/hr${RST} (score: $score)"
+      echo "Best: ${C}$gpu${RST} in ${G}$loc${RST} @ ${Y}\$${price_fmt}/hr${RST} (score: $score)"
       echo -n "Create instance? [y/N] "
       read -r confirm
       if [[ "$confirm" =~ ^[Yy]$ ]]; then
@@ -217,69 +335,82 @@ sudo -u user XDG_RUNTIME_DIR=/run/user/$(id -u user) systemctl --user start suns
 
     search)
       echo "Searching..."
-      local offers=$(uvx vastai search offers \
-        'vms_enabled=true disk_space>=100 cpu_ram>=16 inet_down>=400 dph<0.35 reliability>0.9' \
-        --raw 2>/dev/null)
+      local offers=$(_sunshine_search_json)
 
       if [[ -z "$offers" || "$offers" == "[]" ]]; then
-        echo "No offers found"
+        echo "${R}No offers found${RST}"
         return 1
       fi
 
-      # Color-coded output with individual metric scoring
-      echo "$offers" | jq -r "$JQ_SCORE_FUNCS"'
-        [.[] | select(gpu_score > 0) | {
-          id,
-          gpu_name,
-          geolocation: (.geolocation | split(",")[0]),
-          dph: .dph_total,
-          inet: .inet_down,
-          score: total_score,
-          loc_s: loc_score,
-          gpu_s: gpu_score,
-          price_s: price_score,
-          net_s: net_score
-        }] | sort_by(-.score) | .[:10][] |
-        "\(.score | floor)|\(.gpu_name)|\(.geolocation)|\(.dph)|\(.inet | floor)|\(.id)|\(.loc_s)|\(.gpu_s)|\(.price_s | floor)|\(.net_s | floor)"
-      ' | while IFS='|' read score gpu loc dph inet id loc_s gpu_s price_s net_s; do
-        # Color for location
-        if (( loc_s >= 80 )); then loc_c="$G"
-        elif (( loc_s >= 40 )); then loc_c="$Y"
-        else loc_c="$R"; fi
+      echo "${DIM}GPU          Location      Price      Network   Score${RST}"
+      echo "${DIM}────────────────────────────────────────────────────${RST}"
 
-        # Color for GPU
-        if (( gpu_s >= 75 )); then gpu_c="$G"
-        elif (( gpu_s >= 50 )); then gpu_c="$Y"
-        else gpu_c="$R"; fi
-
-        # Color for price (lower = better)
-        if (( price_s >= 60 )); then price_c="$G"
-        elif (( price_s >= 30 )); then price_c="$Y"
-        else price_c="$R"; fi
-
-        # Color for network
-        if (( net_s >= 80 )); then net_c="$G"
-        elif (( net_s >= 50 )); then net_c="$Y"
-        else net_c="$R"; fi
-
-        # Format price
-        price_fmt=$(printf "%.2f" "$dph")
-
-        printf "${W}%3s pts${RST} | ${gpu_c}%-12s${RST} | ${loc_c}%-10s${RST} | ${price_c}\$%s/hr${RST} | ${net_c}%4sMbps${RST} | ID:%s\n" \
-          "$score" "$gpu" "$loc" "$price_fmt" "$inet" "$id"
+      _sunshine_format_offers "$offers" | while IFS='|' read -r id gpu loc price net score loc_t gpu_p val net_s; do
+        _sunshine_colorize_line "$id" "$gpu" "$loc" "$price" "$net" "$score" "$loc_t" "$gpu_p" "$val" "$net_s"
+        echo ""
       done
       ;;
 
-    "")
-      echo "Usage: sunshine <command>"
-      echo "  ${C}up${RST}      - Find best offer and create instance"
-      echo "  ${C}down${RST}    - Destroy all instances"
-      echo "  ${C}status${RST}  - Show instance details + running cost"
-      echo "  ${C}search${RST}  - List top 10 offers (color-coded)"
-      echo "  ${C}ssh${RST}     - SSH into running instance"
-      echo "  ${C}ip${RST}      - Print instance public IP"
-      echo "  ${C}open${RST}    - Open Sunshine web UI in browser"
-      echo "  ${C}<ID>${RST}    - Create instance from specific offer ID"
+    ""|select)
+      # Interactive mode with fzf
+      if ! command -v fzf &>/dev/null; then
+        echo "${R}fzf not installed. Add it to your nix packages and run: just switch${RST}"
+        echo "Falling back to 'sunshine search'"
+        sunshine search
+        return 1
+      fi
+
+      echo "Searching for offers..."
+      local offers=$(_sunshine_search_json)
+
+      if [[ -z "$offers" || "$offers" == "[]" ]]; then
+        echo "${R}No offers found${RST}"
+        return 1
+      fi
+
+      # Build fzf input with colors
+      local fzf_input=""
+      while IFS='|' read -r id gpu loc price net score loc_t gpu_p val net_s; do
+        local line=$(_sunshine_colorize_line "$id" "$gpu" "$loc" "$price" "$net" "$score" "$loc_t" "$gpu_p" "$val" "$net_s")
+        fzf_input+="$line"$'\n'
+      done < <(_sunshine_format_offers "$offers")
+
+      # Run fzf
+      local selected=$(echo -n "$fzf_input" | fzf --ansi --height=15 --reverse \
+        --header="Select an offer (Enter to create, Esc to cancel)" \
+        --header-first \
+        --no-info)
+
+      if [[ -z "$selected" ]]; then
+        echo "Cancelled"
+        return 0
+      fi
+
+      # Extract ID from selection (first field before |)
+      local selected_id=$(echo "$selected" | cut -d'|' -f1)
+
+      if [[ -n "$selected_id" ]]; then
+        echo "Creating instance from offer ${C}$selected_id${RST}..."
+        _sunshine_create "$selected_id"
+        [[ $? -eq 0 ]] && echo "${G}Instance created${RST}" || { echo "${R}Failed${RST}"; return 1; }
+      fi
+      ;;
+
+    help)
+      echo "Usage: sunshine [command]"
+      echo ""
+      echo "Commands:"
+      echo "  ${C}(none)${RST}    Interactive offer selection with fzf"
+      echo "  ${C}up${RST}        Auto-select best offer and create"
+      echo "  ${C}down${RST}      Destroy all instances"
+      echo "  ${C}status${RST}    Show instance details + running cost"
+      echo "  ${C}search${RST}    List top offers (non-interactive)"
+      echo "  ${C}ssh${RST}       SSH into running instance"
+      echo "  ${C}ip${RST}        Print instance public IP"
+      echo "  ${C}open${RST}      Open Sunshine web UI in browser"
+      echo "  ${C}<ID>${RST}      Create instance from specific offer ID"
+      echo ""
+      echo "Scoring prioritizes: location (EU) > value (perf/\$) > network > reliability"
       ;;
 
     *)
@@ -288,6 +419,7 @@ sudo -u user XDG_RUNTIME_DIR=/run/user/$(id -u user) systemctl --user start suns
         [[ $? -eq 0 ]] && echo "${G}Instance created${RST}" || { echo "${R}Failed${RST}"; return 1; }
       else
         echo "${R}Unknown command: $1${RST}"
+        echo "Run 'sunshine help' for usage"
         return 1
       fi
       ;;

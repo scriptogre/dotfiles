@@ -39,6 +39,7 @@
     _1password-cli
 
     # System utilities
+    socat  # UDP forwarding for Moonlight
     fzf
     curl
     htop

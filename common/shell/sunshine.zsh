@@ -53,6 +53,16 @@ elapsed() { echo "$(($(date +%s) - START))s"; }
 
 echo "[$(elapsed)] Starting setup..."
 
+echo "user:user" | chpasswd
+
+# Enable auto-login
+mkdir -p /etc/lightdm/lightdm.conf.d
+cat > /etc/lightdm/lightdm.conf.d/autologin.conf << 'AUTOLOGIN'
+[Seat:*]
+autologin-user=user
+autologin-user-timeout=0
+AUTOLOGIN
+
 ufw disable 2>/dev/null || true
 pkill -9 sunshine 2>/dev/null || true
 
@@ -207,13 +217,10 @@ SETUPEOF
     echo ""
     if [[ -n "$ts_ip" ]]; then
       echo ""
-      echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-      echo "${G}Ready!${RST} Connect Moonlight to:"
-      echo ""
-      echo "  ${C}sunshine${RST}  (or $ts_ip)"
-      echo ""
-      echo "Web UI: ${C}https://sunshine${RST}"
-      echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+      echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+      echo "${G}Ready!${RST} Add host in Moonlight: ${C}${ts_ip}${RST}"
+      echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+      open -a "Moonlight"
     else
       echo "${Y}Tailscale not ready. Run 'sunshine status' later.${RST}"
     fi

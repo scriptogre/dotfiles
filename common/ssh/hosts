@@ -1,0 +1,9 @@
+Host betania
+  HostName 100.75.204.87
+  User root
+  ForwardAgent yes
+
+Host thinkcentre
+  HostName 192.168.0.12
+  User chris
+  ForwardAgent yes

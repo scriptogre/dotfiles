@@ -1,13 +1,7 @@
-# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+# Fix invalid locale from JetBrains/macOS (BCP 47 format not supported by bash)
+if [[ "$LC_ALL" == *-u-* ]]; then
+  export LC_ALL="en_US.UTF-8"
 fi
-
-# Oh-My-Zsh setup
-export ZSH="$HOME/.oh-my-zsh"
-ZSH_THEME="powerlevel10k/powerlevel10k"
-plugins=(git)
-source $ZSH/oh-my-zsh.sh
 
 # Load p10k configuration if it exists
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
@@ -15,10 +9,56 @@ source $ZSH/oh-my-zsh.sh
 # Powerlevel10k settings
 POWERLEVEL9K_PROMPT_ON_NEWLINE=true
 
-# 1Password SSH agent for commit signing
-export SSH_AUTH_SOCK="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+# 1Password SSH agent (configured via home-manager programs.ssh)
+
+# Writable npm global prefix (shadows Nix packages when needed)
+export NPM_CONFIG_PREFIX="$HOME/.npm-global"
+export PATH="$HOME/.npm-global/bin:$PATH"
 
 alias rsynca='rsync -avzP'
+
+# Claude Code multi-account isolation
+# Each function uses a separate config directory for independent login sessions
+# History is shared via symlink; projects are separate to avoid sessions-index.json race conditions
+_claude_shared_init() {
+  local config_dir="$CLAUDE_CONFIG_DIR"
+  local all_accounts=(.claude-1 .claude-2 .claude-3 .claude-4 .claude-5 .claude-6 .claude-oncogen)
+
+  mkdir -p "$config_dir/projects"
+
+  # Symlink history (append-only, safe for concurrent access)
+  ln -sf "$HOME/.claude/history.jsonl" "$config_dir/history.jsonl" 2>/dev/null
+
+  # Sync session files from all other accounts to this account
+  # This enables --resume to find sessions started on other accounts
+  # Each account keeps its own sessions-index.json (avoids race condition)
+  for account in "${all_accounts[@]}"; do
+    local src="$HOME/$account/projects"
+    [[ -d "$src" && "$src" != "$config_dir/projects" ]] || continue
+
+    # Sync *.jsonl session files (but NOT sessions-index.json)
+    for project_dir in "$src"/*(/N); do
+      local project_name="${project_dir:t}"
+      local dest_project="$config_dir/projects/$project_name"
+      mkdir -p "$dest_project"
+
+      for session_file in "$project_dir"/*.jsonl(N); do
+        local session_name="${session_file:t}"
+        [[ "$session_name" == "sessions-index.json" ]] && continue
+        local dest_file="$dest_project/$session_name"
+        # Only copy if source is newer or dest doesn't exist
+        [[ -f "$dest_file" && "$dest_file" -nt "$session_file" ]] || cp -p "$session_file" "$dest_file" 2>/dev/null
+      done
+    done
+  done
+}
+claude-1() { export CLAUDE_CONFIG_DIR="$HOME/.claude-1"; _claude_shared_init; claude "$@"; }
+claude-2() { export CLAUDE_CONFIG_DIR="$HOME/.claude-2"; _claude_shared_init; claude "$@"; }
+claude-3() { export CLAUDE_CONFIG_DIR="$HOME/.claude-3"; _claude_shared_init; claude "$@"; }
+claude-4() { export CLAUDE_CONFIG_DIR="$HOME/.claude-4"; _claude_shared_init; claude "$@"; }
+claude-5() { export CLAUDE_CONFIG_DIR="$HOME/.claude-5"; _claude_shared_init; claude "$@"; }
+claude-6() { export CLAUDE_CONFIG_DIR="$HOME/.claude-6"; _claude_shared_init; claude "$@"; }
+claude-oncogen() { export CLAUDE_CONFIG_DIR="$HOME/.claude-oncogen"; _claude_shared_init; claude "$@"; }
 
 # -----------------------------------------------------------------------------
 # finda: search for filenames or directory names locally or on a remote host,
@@ -177,7 +217,7 @@ ${recent_commits}
 If the recent commits follow a clean, consistent pattern, match that style. Otherwise, use a short, concise imperative sentence starting with a titlecase verb (e.g., 'Add ...', 'Update ...', 'Fix ...'). The message should describe what capabilities or features now exist (not the development process). Keep it focused and professional."
 }
 
-eval "$(direnv hook zsh)"
+command -v direnv &>/dev/null && eval "$(direnv hook zsh)"
 
-# vast.ai sunshine game streaming
-source "$HOME/Projects/dotfiles/common/shell/sunshine.zsh"
+# vast.ai sunshine game streaming (macOS only)
+[[ -f "$HOME/Projects/dotfiles/common/shell/sunshine.zsh" ]] && source "$HOME/Projects/dotfiles/common/shell/sunshine.zsh"

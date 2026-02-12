@@ -2,12 +2,22 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Important: Applying Changes
+
+All files in this repo are managed by Nix/home-manager. **Editing files here does NOT immediately apply changes.**
+
+After any edit, run:
+```bash
+cd ~/Projects/dotfiles && just rebuild
+```
+
+This rebuilds the Nix configuration and symlinks files (like `~/.zshrc`) to the Nix store.
+
 ## Common Commands
 
+- `just rebuild` - Applies configuration changes (runs `darwin-rebuild switch`)
 - `just update` - Updates Nix flakes to latest versions
-- `just switch` - Applies configuration changes (runs `sudo darwin-rebuild switch --flake .#macbook`)
 - `nix flake check` - Validates flake configuration
-- `darwin-rebuild switch --flake .#macbook` - Manually apply Darwin configuration
 
 ## Architecture
 

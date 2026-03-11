@@ -24,33 +24,45 @@ _claude_shared_init() {
   local config_dir="$CLAUDE_CONFIG_DIR"
   local all_accounts=(.claude-1 .claude-2 .claude-3 .claude-4 .claude-5 .claude-6 .claude-oncogen)
 
+  # Fix Bun/JSC idle CPU spin: without these, each session pins a full core at 100%
+  # even when idle. See https://github.com/anthropics/claude-code/issues/22509
+  export MIMALLOC_PURGE_DELAY=0
+  export MIMALLOC_ARENA_EAGER_COMMIT=0
+  export BUN_JSC_gcMaxHeapSize=1500000000
+  export BUN_JSC_smallHeapRAMFraction=0.05
+  export BUN_JSC_mediumHeapRAMFraction=0.15
+  export BUN_GC_TIMER_INTERVAL=300
+
   mkdir -p "$config_dir/projects"
 
-  # Symlink history (append-only, safe for concurrent access)
+  # Symlink shared files from primary config
   ln -sf "$HOME/.claude/history.jsonl" "$config_dir/history.jsonl" 2>/dev/null
+  ln -sf "$HOME/.claude/settings.json" "$config_dir/settings.json" 2>/dev/null
 
-  # Sync session files from all other accounts to this account
+  # Sync session files from all other accounts to this account (in background)
   # This enables --resume to find sessions started on other accounts
   # Each account keeps its own sessions-index.json (avoids race condition)
-  for account in "${all_accounts[@]}"; do
-    local src="$HOME/$account/projects"
-    [[ -d "$src" && "$src" != "$config_dir/projects" ]] || continue
+  {
+    for account in "${all_accounts[@]}"; do
+      src="$HOME/$account/projects"
+      [[ -d "$src" && "$src" != "$config_dir/projects" ]] || continue
 
-    # Sync *.jsonl session files (but NOT sessions-index.json)
-    for project_dir in "$src"/*(/N); do
-      local project_name="${project_dir:t}"
-      local dest_project="$config_dir/projects/$project_name"
-      mkdir -p "$dest_project"
+      # Sync *.jsonl session files (but NOT sessions-index.json)
+      for project_dir in "$src"/*(/N); do
+        project_name="${project_dir:t}"
+        dest_project="$config_dir/projects/$project_name"
+        mkdir -p "$dest_project"
 
-      for session_file in "$project_dir"/*.jsonl(N); do
-        local session_name="${session_file:t}"
-        [[ "$session_name" == "sessions-index.json" ]] && continue
-        local dest_file="$dest_project/$session_name"
-        # Only copy if source is newer or dest doesn't exist
-        [[ -f "$dest_file" && "$dest_file" -nt "$session_file" ]] || cp -p "$session_file" "$dest_file" 2>/dev/null
+        for session_file in "$project_dir"/*.jsonl(N); do
+          session_name="${session_file:t}"
+          [[ "$session_name" == "sessions-index.json" ]] && continue
+          dest_file="$dest_project/$session_name"
+          # Only copy if source is newer or dest doesn't exist
+          [[ -f "$dest_file" && "$dest_file" -nt "$session_file" ]] || cp -p "$session_file" "$dest_file" 2>/dev/null
+        done
       done
     done
-  done
+  } &!
 }
 claude-1() { export CLAUDE_CONFIG_DIR="$HOME/.claude-1"; _claude_shared_init; claude "$@"; }
 claude-2() { export CLAUDE_CONFIG_DIR="$HOME/.claude-2"; _claude_shared_init; claude "$@"; }
@@ -190,32 +202,6 @@ removebg() {
   [[ $? -eq 0 ]] && echo "✅ Done: $out" || echo "❌ Failed."
 }
 
-# Auto-commit function that generates commit messages using Claude
-commit() {
-  # Check if we're in a git repo
-  if ! git rev-parse --git-dir > /dev/null 2>&1; then
-    echo "❌ Not in a git repository"
-    return 1
-  fi
-
-  # Check if there are changes to commit
-  if git diff --quiet && git diff --cached --quiet; then
-    echo "ℹ️  No changes to commit"
-    return 0
-  fi
-
-  # Get recent commit messages for pattern detection
-  local recent_commits=$(git log -10 --pretty=format:"%s" 2>/dev/null | head -n 10)
-
-  # Use Claude Code to analyze changes and create commit
-  echo "🤖 Analyzing changes and creating commit..."
-  claude "Create a git commit with the current changes and push it to the remote repository.
-
-Recent commit messages from this repository (for pattern detection):
-${recent_commits}
-
-If the recent commits follow a clean, consistent pattern, match that style. Otherwise, use a short, concise imperative sentence starting with a titlecase verb (e.g., 'Add ...', 'Update ...', 'Fix ...'). The message should describe what capabilities or features now exist (not the development process). Keep it focused and professional."
-}
 
 command -v direnv &>/dev/null && eval "$(direnv hook zsh)"
 

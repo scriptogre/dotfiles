@@ -57,14 +57,23 @@
               logFile = "${home}/Library/Logs/nix-daily-update.log";
               brew = "/opt/homebrew/bin/brew";
             in ''
+              # Raise file descriptor limit (macOS launchd default of 256 is too low for nix)
+              ulimit -n 65536
+
               # Add git and other tools to path
               export PATH="/etc/profiles/per-user/${config.system.primaryUser}/bin:$PATH"
 
               echo "Starting daily update at $(date)" >> ${logFile}
               cd ${repoPath}
 
-              # Quit running apps that need updates
-              echo "Checking for running apps that need updates..." >> ${logFile}
+              # Update flake inputs first (before quitting any apps)
+              if ! ${nix} flake update --flake ./hosts/${host} >> ${logFile} 2>&1; then
+                echo "Flake update failed at $(date)" >> ${logFile}
+                /usr/bin/osascript -e 'display notification "Flake update failed. Check ${logFile}" with title "Daily Update" subtitle "Failure"'
+                exit 1
+              fi
+
+              # Only quit apps after flake update succeeds
               RUNNING_APPS=("Brave Browser" "Google Chrome" "Firefox" "Discord" "Spotify" "Obsidian" "Telegram")
               for app in "''${RUNNING_APPS[@]}"; do
                 if pgrep -x "$app" > /dev/null; then
@@ -72,25 +81,27 @@
                   osascript -e "quit app \"$app\"" 2>> ${logFile} || true
                 fi
               done
-
-              # Wait a moment for apps to quit gracefully
               sleep 5
 
-              if ${nix} flake update --flake ./hosts/${host} >> ${logFile} 2>&1; then
-                if sudo ${darwin-rebuild} switch --flake ./hosts/${host}#${host} >> ${logFile} 2>&1; then
-                  echo "Update successful at $(date)" >> ${logFile}
-                  /usr/bin/osascript -e 'display notification "System updated successfully" with title "Daily Update"'
-                else
-                  echo "Rebuild failed at $(date)" >> ${logFile}
-                  /usr/bin/osascript -e 'display notification "Darwin rebuild failed. Check ${logFile}" with title "Daily Update" subtitle "Failure"'
-                fi
+              if sudo ${darwin-rebuild} switch --flake ./hosts/${host}#${host} >> ${logFile} 2>&1; then
+                echo "Update successful at $(date)" >> ${logFile}
+                /usr/bin/osascript -e 'display notification "System updated successfully" with title "Daily Update"'
               else
-                echo "Flake update failed at $(date)" >> ${logFile}
-                /usr/bin/osascript -e 'display notification "Flake update failed. Check ${logFile}" with title "Daily Update" subtitle "Failure"'
+                echo "Rebuild failed at $(date)" >> ${logFile}
+                /usr/bin/osascript -e 'display notification "Darwin rebuild failed. Check ${logFile}" with title "Daily Update" subtitle "Failure"'
               fi
             '';
           };
         })
+
+        # Strip quarantine flags from Nix-managed apps so macOS doesn't
+        # flag them as "from an unidentified developer" after updates
+        {
+          system.activationScripts.postActivation.text = ''
+            echo "Stripping quarantine flags from Nix apps..."
+            /usr/bin/xattr -dr com.apple.quarantine /Applications/Nix\ Apps/*.app 2>/dev/null || true
+          '';
+        }
 
         # Homebrew
         nix-homebrew.darwinModules.nix-homebrew
@@ -102,6 +113,7 @@
           };
           homebrew = {
             enable = true;
+            greedyCasks = true;
             onActivation = {
                 autoUpdate = true;
                 cleanup = "zap";
@@ -115,16 +127,13 @@
               "bettertouchtool"
               "brave-browser"
               "codex"
-              "claude"
-              "discord"
+              "claude-code"
               "firefox"
               "google-chrome"
               "iterm2"
               "jetbrains-toolbox"
               "karabiner-elements"
               "jordanbaird-ice"
-              "ledger-wallet"
-              "lm-studio"
               "mos"
               "notunes"
               "nordvpn"
@@ -132,7 +141,7 @@
               "obsidian"
               "omnidisksweeper"
               "orbstack"
-              "parallels"
+              "parallels@20"
               "proton-mail"
               "pycharm"
               "raycast"
@@ -140,7 +149,6 @@
               "synology-drive"
               "telegram"
               "todoist-app"
-              "vibetunnel"
               "volume-control"
             ];
 
@@ -162,6 +170,12 @@
             # Karabiner config for key remaps (note: overwrites remaps created in the UI)
             home.file.".config/karabiner/karabiner.json" = {
                 source = ./../../common/karabiner/karabiner.json;
+                force = true;
+            };
+
+            # Synology Drive global blacklist (excludes dev artifacts from sync/backup)
+            home.file."Library/Application Support/SynologyDrive/data/blacklist.filter" = {
+                source = ./../../common/synology-drive/blacklist.filter;
                 force = true;
             };
           };

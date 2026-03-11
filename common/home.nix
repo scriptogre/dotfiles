@@ -1,6 +1,9 @@
 { pkgs, lib, ... }: {
   home.stateVersion = "25.05";
 
+  # Ensure ~/.local/bin is in PATH (for official Claude Code installer, etc.)
+  home.sessionPath = [ "$HOME/.local/bin" ];
+
   # Disable nix management in home-manager (Determinate Nix manages this)
   nix.enable = lib.mkForce false;
 
@@ -44,11 +47,10 @@
     just
     uv
     gemini-cli
-    claude-code
-    nodejs_20
+    opencode
+    codex
     deno
     bun
-    pnpm
     rustup
 
     # Secrets management
@@ -56,7 +58,7 @@
     age
 
     # System utilities
-    socat  # UDP forwarding for Moonlight
+    iperf3
     fzf
     curl
     htop

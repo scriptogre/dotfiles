@@ -19,10 +19,18 @@
         {
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
-          home-manager.users.chris = { pkgs, ... }: {
+          home-manager.users.chris = { pkgs, lib, ... }: {
             imports = [ ../../common/home.nix ];
             home.username = "chris";
             home.homeDirectory = "/home/chris";
+            dconf.settings = {
+              "org/gnome/desktop/session" = {
+                idle-delay = lib.hm.gvariant.mkUint32 0;
+              };
+              "org/gnome/desktop/screensaver" = {
+                lock-enabled = false;
+              };
+            };
             home.file."Justfile".text = ''
               default: rebuild
 
@@ -49,43 +57,26 @@
               # Start a container
               start name:
                   docker start {{name}}
-            '';
-            home.file.".config/monitors.xml".text = ''
-              <monitors version="2">
-                <configuration>
-                  <logicalmonitor>
-                    <x>0</x>
-                    <y>0</y>
-                    <scale>1</scale>
-                    <primary>yes</primary>
-                    <monitor>
-                      <monitorspec>
-                        <connector>HDMI-1</connector>
-                        <vendor>LNX</vendor>
-                        <product>virt-1080p</product>
-                        <serial>Linux #0</serial>
-                      </monitorspec>
-                      <mode>
-                        <width>1920</width>
-                        <height>1080</height>
-                        <rate>60.000</rate>
-                      </mode>
-                    </monitor>
-                  </logicalmonitor>
-                </configuration>
-              </monitors>
+
+              # Start Windows gaming VM (takes over GPU)
+              game:
+                  virsh start win11
+
+              # Stop Windows gaming VM (returns GPU to host)
+              stop-game:
+                  virsh shutdown win11
             '';
           };
         }
 
         # System configuration
-        ({ pkgs, config, ... }: {
+        ({ pkgs, config, lib, ... }: {
 
             # Users
             users.users.chris = {
               isNormalUser = true;
               shell = pkgs.zsh;
-              extraGroups = [ "wheel" "networkmanager" "docker" "video" "render" "input" ];
+              extraGroups = [ "wheel" "networkmanager" "docker" "video" "render" "input" "libvirtd" "kvm" ];
               password = "chris";
               openssh.authorizedKeys.keys = [
                 "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINLGEYgN5pbs2u1eMfTnpKUqHCm8fPuC/vSeV4Ht0KyL" # home_network_key_2 (1Password)
@@ -96,21 +87,23 @@
 
             # Bootloader
             boot.loader.systemd-boot.enable = true;
+            boot.loader.systemd-boot.consoleMode = "auto";
             boot.loader.efi.canTouchEfiVariables = true;
 
-            # Virtual display for headless Sunshine streaming (KMS capture)
+            # IOMMU for GPU passthrough + split lock fix for Windows VM performance
             boot.kernelParams = [
-              "video=HDMI-A-1:1920x1080@60e"
-              "drm.edid_firmware=HDMI-A-1:edid/virt-1080p.bin"
+              "intel_iommu=on"
+              "iommu=pt"
+              "split_lock_detect=off"
             ];
-            hardware.display.edid.enable = true;
-            hardware.display.edid.modelines."virt-1080p" =
-              "148.50  1920 2008 2052 2200  1080 1084 1089 1125 +hsync +vsync";
+
+            # VFIO modules for GPU passthrough (loaded but don't auto-bind — hook script handles binding)
+            boot.kernelModules = [ "vfio_pci" "vfio" "vfio_iommu_type1" ];
 
             # Networking
             networking.hostName = "thinkcentre";
             networking.networkmanager.enable = true;
-            networking.wireless.enable = false;
+            networking.wireless.enable = lib.mkForce false;
             networking.networkmanager.ensureProfiles.profiles = {
               "Wired Static" = {
                 connection = {
@@ -135,17 +128,24 @@
                 80     # HTTP
                 443    # HTTPS
                 3000   # SpacetimeDB
+                5900   # VNC (Windows VM install)
                 32400  # Plex
               ];
             };
 
-            # Intel GPU (QuickSync hardware transcoding)
+            # Intel GPU (QuickSync hardware transcoding + Vulkan for gaming)
             hardware.graphics = {
               enable = true;
+              enable32Bit = true;    # 32-bit Vulkan/GL for Wine games
               extraPackages = with pkgs; [
                 intel-media-driver    # VAAPI for 12th/13th gen+
                 vpl-gpu-rt            # Intel Video Processing Library
                 intel-compute-runtime # OpenCL support
+                vulkan-loader        # Vulkan ICD loader
+              ];
+              extraPackages32 = with pkgs.pkgsi686Linux; [
+                intel-media-driver    # 32-bit VAAPI
+                vulkan-loader        # 32-bit Vulkan
               ];
             };
 
@@ -175,7 +175,72 @@
             # Docker
             virtualisation.docker.enable = true;
 
-            # Plex Media Server (with Intel QuickSync)
+            # Libvirt/QEMU for Windows gaming VM with GPU passthrough
+            virtualisation.libvirtd = {
+              enable = true;
+              qemu = {
+                package = pkgs.qemu_kvm;
+                runAsRoot = true;
+                swtpm.enable = true;
+              };
+            };
+
+            # Libvirt hook: bind/unbind dGPU (RTX 3060 Ti) for VM passthrough
+            # iGPU stays on host for GDM + Plex QuickSync
+            environment.etc."libvirt/hooks/qemu" = {
+              mode = "0755";
+              text = ''
+                #!/bin/sh
+                GUEST_NAME="$1"
+                HOOK_NAME="$2"
+                STATE_NAME="$3"
+
+                DGPU_PCI="0000:01:00.0"
+                DGPU_AUDIO_PCI="0000:01:00.1"
+
+                if [ "$GUEST_NAME" != "win11" ]; then
+                  exit 0
+                fi
+
+                bind_to_vfio() {
+                  local pci="$1"
+                  local current_driver="$2"
+                  if [ -n "$current_driver" ] && [ -e "/sys/bus/pci/drivers/$current_driver/$pci" ]; then
+                    echo "$pci" > "/sys/bus/pci/drivers/$current_driver/unbind"
+                  fi
+                  echo "vfio-pci" > "/sys/bus/pci/devices/$pci/driver_override"
+                  echo "$pci" > /sys/bus/pci/drivers/vfio-pci/bind 2>/dev/null || true
+                }
+
+                unbind_from_vfio() {
+                  local pci="$1"
+                  if [ -e "/sys/bus/pci/drivers/vfio-pci/$pci" ]; then
+                    echo "$pci" > /sys/bus/pci/drivers/vfio-pci/unbind
+                  fi
+                  echo "" > "/sys/bus/pci/devices/$pci/driver_override"
+                }
+
+                if [ "$HOOK_NAME" = "prepare" ] && [ "$STATE_NAME" = "begin" ]; then
+                  modprobe vfio-pci
+
+                  # Bind dGPU + audio to vfio-pci
+                  bind_to_vfio "$DGPU_PCI" "nouveau"
+                  bind_to_vfio "$DGPU_AUDIO_PCI" "snd_hda_intel"
+
+                elif [ "$HOOK_NAME" = "release" ] && [ "$STATE_NAME" = "end" ]; then
+                  # Release dGPU from vfio-pci
+                  unbind_from_vfio "$DGPU_PCI"
+                  unbind_from_vfio "$DGPU_AUDIO_PCI"
+
+                  sleep 1
+
+                  # Rescan PCI — nouveau reclaims the dGPU
+                  echo 1 > /sys/bus/pci/rescan
+                fi
+              '';
+            };
+
+            # Plex Media Server (with Intel QuickSync) + SpacetimeDB
             virtualisation.oci-containers = {
               backend = "docker";
               containers.spacetimedb = {
@@ -205,40 +270,10 @@
               };
             };
 
-            # Desktop Environment
+            # Desktop Environment (Wayland)
             services.xserver.enable = true;
             services.displayManager.gdm.enable = true;
             services.desktopManager.gnome.enable = true;
-
-            # GDM monitors.xml (enables virtual display at login screen)
-            systemd.tmpfiles.rules = [
-              "d /var/lib/gdm/.config 0755 gdm gdm -"
-              "L+ /var/lib/gdm/.config/monitors.xml - - - - ${pkgs.writeText "gdm-monitors.xml" ''
-                <monitors version="2">
-                  <configuration>
-                    <logicalmonitor>
-                      <x>0</x>
-                      <y>0</y>
-                      <scale>1</scale>
-                      <primary>yes</primary>
-                      <monitor>
-                        <monitorspec>
-                          <connector>HDMI-1</connector>
-                          <vendor>LNX</vendor>
-                          <product>virt-1080p</product>
-                          <serial>Linux #0</serial>
-                        </monitorspec>
-                        <mode>
-                          <width>1920</width>
-                          <height>1080</height>
-                          <rate>60.000</rate>
-                        </mode>
-                      </monitor>
-                    </logicalmonitor>
-                  </configuration>
-                </monitors>
-              ''}"
-            ];
 
             # Keep machine awake and reachable (headless server)
             services.logind = {
@@ -267,6 +302,19 @@
               defaultWindowManager = "${pkgs.gnome-session}/bin/gnome-session";
             };
 
+            # Cockpit web UI for managing VMs
+            services.cockpit = {
+              enable = true;
+              port = 9090;
+              openFirewall = true;
+              settings = {
+                WebService = {
+                  AllowUnencrypted = true;
+                  Origins = lib.mkForce "https://thinkcentre.christiantanul.com https://localhost:9090";
+                };
+              };
+            };
+
             # SSH
             services.openssh = {
               enable = true;
@@ -286,24 +334,29 @@
               ];
             };
 
-            # Sunshine game streaming (Moonlight host)
-            services.sunshine = {
-              enable = true;
-              autoStart = true;
-              capSysAdmin = true;   # Required for Wayland DRM/KMS capture
-              openFirewall = true;  # Opens TCP 47984-47990, UDP 47998-48000, UDP 48010
+            # libvirt-dbus system service (required for Cockpit VM management)
+            users.groups.libvirtdbus = {};
+            users.users.libvirtdbus = {
+              isSystemUser = true;
+              group = "libvirtdbus";
+              extraGroups = [ "libvirtd" ];
+            };
+            systemd.services.libvirt-dbus = {
+              description = "Libvirt DBus Service (system)";
+              after = [ "libvirtd.service" ];
+              requires = [ "libvirtd.service" ];
+              wantedBy = [ "multi-user.target" ];
+              serviceConfig = {
+                Type = "dbus";
+                BusName = "org.libvirt";
+                User = "libvirtdbus";
+                ExecStart = "${pkgs.libvirt-dbus}/sbin/libvirt-dbus --system";
+              };
             };
 
-            services.udev.extraRules = ''
-              KERNEL=="uinput", MODE="0660", GROUP="input", SYMLINK+="uinput"
-            '';
-
-            # Gaming
             environment.systemPackages = with pkgs; [
-              bottles      # Wine prefix manager with GUI
-              winetricks   # Manual dependency installation
-              gamemode     # Performance optimizations while gaming
-              mangohud     # FPS overlay for debugging performance
+              cockpit-machines         # VM management in Cockpit web UI
+              libvirt-dbus             # D-Bus bridge for libvirt (Cockpit dependency)
             ];
 
             # Other

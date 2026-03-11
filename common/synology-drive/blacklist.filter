@@ -1,0 +1,26 @@
+[Version]
+major = 1
+minor = 1
+
+[Common]
+max_length = 0
+max_path = 0
+
+[File]
+black_name = ".DS_Store", ".gitmodules"
+
+black_suffix = ".lnk", ".pst", ".pyc", ".pyo", ".swp", ".swo", ".temp",
+".tmp", ".log", ".bak", ".orig"
+max_size = 0
+
+[Directory]
+black_name = ".idea", ".vscode", ".fleet",
+"node_modules", "dist", "target", "worktrees",
+"__pycache__", ".mypy_cache", ".ruff_cache", ".pytest_cache",
+"venv", ".venv", ".tox", ".nox", "build", ".build",
+".cache", ".parcel-cache", ".next", ".nuxt", ".svelte-kit",
+".terraform", ".vagrant", "vendor", "Pods", ".gradle",
+".sass-cache", "coverage", ".coverage", "htmlcov",
+".eggs", "*.egg-info"
+
+[EA]

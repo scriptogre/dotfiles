@@ -46,4 +46,3 @@ game:
 # Stop Windows gaming VM (returns GPU to host)
 stop-game:
     virsh shutdown win11
-# webhook-test

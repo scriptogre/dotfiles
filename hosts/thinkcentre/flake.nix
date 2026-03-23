@@ -169,20 +169,23 @@
               description = "Dotfiles Gitea webhook listener";
               wantedBy = [ "multi-user.target" ];
               after = [ "network.target" ];
-              path = with pkgs; [ git just nix ];
+              path = with pkgs; [ git just bash coreutils openssh ];
+              environment = {
+                HOME = "/home/chris";
+                GIT_SSH_COMMAND = "ssh -o StrictHostKeyChecking=accept-new";
+              };
               serviceConfig = {
                 User = "chris";
                 Group = "users";
+                WorkingDirectory = "/home/chris/dotfiles";
                 ExecStart = pkgs.writeShellScript "dotfiles-webhook" ''
-                  cd /home/chris/dotfiles
                   echo "Dotfiles webhook listening on port 9876..."
                   while true; do
                     echo -e "HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nok" | ${pkgs.netcat-gnu}/bin/nc -l -p 9876 > /dev/null 2>&1
                     echo "$(date): webhook received, pulling..."
-                    git pull --ff-only 2>&1 || true
+                    cd /home/chris/dotfiles && git pull --ff-only 2>&1 || true
                     echo "$(date): linking..."
                     cd /home/chris/dotfiles/hosts/thinkcentre && just link 2>&1 || true
-                    cd /home/chris/dotfiles
                     echo "$(date): done."
                   done
                 '';

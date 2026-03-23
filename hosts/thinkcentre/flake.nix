@@ -14,11 +14,13 @@
       system = "x86_64-linux";
       modules = [
         ./hardware-configuration.nix
+        ./gaming-vm.nix
         # Home Manager
         home-manager.nixosModules.home-manager
         {
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
+          home-manager.backupFileExtension = "hm-backup";
           home-manager.users.chris = { pkgs, lib, ... }: {
             imports = [ ../../common/home.nix ];
             home.username = "chris";
@@ -31,41 +33,6 @@
                 lock-enabled = false;
               };
             };
-            home.file."Justfile".text = ''
-              default: rebuild
-
-              # Rebuild NixOS from flake
-              rebuild:
-                  sudo nixos-rebuild switch --flake ~/dotfiles/hosts/thinkcentre
-
-              # Show running containers
-              status:
-                  docker ps
-
-              # View container logs
-              logs name:
-                  docker logs -f --tail 100 {{name}}
-
-              # Restart a container
-              restart name:
-                  docker restart {{name}}
-
-              # Stop a container
-              stop name:
-                  docker stop {{name}}
-
-              # Start a container
-              start name:
-                  docker start {{name}}
-
-              # Start Windows gaming VM (takes over GPU)
-              game:
-                  virsh start win11
-
-              # Stop Windows gaming VM (returns GPU to host)
-              stop-game:
-                  virsh shutdown win11
-            '';
           };
         }
 
@@ -80,6 +47,7 @@
               password = "chris";
               openssh.authorizedKeys.keys = [
                 "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINLGEYgN5pbs2u1eMfTnpKUqHCm8fPuC/vSeV4Ht0KyL" # home_network_key_2 (1Password)
+                "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHjvbv2K5oydAynpFJIJKHlvbvex6HheCYIJq7Sm48ZT" # openclaw-container
               ];
             };
             programs.zsh.enable = true;
@@ -89,16 +57,6 @@
             boot.loader.systemd-boot.enable = true;
             boot.loader.systemd-boot.consoleMode = "auto";
             boot.loader.efi.canTouchEfiVariables = true;
-
-            # IOMMU for GPU passthrough + split lock fix for Windows VM performance
-            boot.kernelParams = [
-              "intel_iommu=on"
-              "iommu=pt"
-              "split_lock_detect=off"
-            ];
-
-            # VFIO modules for GPU passthrough (loaded but don't auto-bind — hook script handles binding)
-            boot.kernelModules = [ "vfio_pci" "vfio" "vfio_iommu_type1" ];
 
             # Networking
             networking.hostName = "thinkcentre";
@@ -124,12 +82,22 @@
               enable = true;
               trustedInterfaces = [ "tailscale0" ];
               allowedTCPPorts = [
-                3389   # RDP
-                80     # HTTP
-                443    # HTTPS
+                80     # HTTP (Caddy)
+                443    # HTTPS (Caddy)
+                53     # DNS (AdGuard)
+                853    # DNS-over-TLS (AdGuard)
                 3000   # SpacetimeDB
+                3389   # RDP
                 5900   # VNC (Windows VM install)
+                8123   # Home Assistant
+                8384   # Syncthing GUI (behind Caddy lan-only)
+                9876   # Dotfiles webhook (Gitea push → git pull)
                 32400  # Plex
+              ];
+              allowedUDPPorts = [
+                53     # DNS (AdGuard)
+                443    # HTTP/3 (Caddy)
+                8853   # DNS-over-QUIC (AdGuard)
               ];
             };
 
@@ -171,102 +139,55 @@
                 "x-systemd.device-timeout=5s" "x-systemd.mount-timeout=5s"
               ];
             };
+            fileSystems."/mnt/nas/media_server" = {
+              device = "//192.168.0.14/media_server";
+              fsType = "cifs";
+              options = [
+                "credentials=/var/lib/nas-credentials" "uid=1000" "gid=100"
+                "nofail" "x-systemd.automount" "x-systemd.idle-timeout=60"
+                "x-systemd.device-timeout=5s" "x-systemd.mount-timeout=5s"
+              ];
+            };
+            fileSystems."/mnt/nas/homes" = {
+              device = "//192.168.0.14/homes";
+              fsType = "cifs";
+              options = [
+                "credentials=/var/lib/nas-credentials" "uid=1000" "gid=100"
+                "nofail" "x-systemd.automount" "x-systemd.idle-timeout=60"
+                "x-systemd.device-timeout=5s" "x-systemd.mount-timeout=5s"
+              ];
+            };
 
             # Docker
             virtualisation.docker.enable = true;
 
-            # Libvirt/QEMU for Windows gaming VM with GPU passthrough
-            virtualisation.libvirtd = {
-              enable = true;
-              qemu = {
-                package = pkgs.qemu_kvm;
-                runAsRoot = true;
-                swtpm.enable = true;
-              };
-            };
-
-            # Libvirt hook: bind/unbind dGPU (RTX 3060 Ti) for VM passthrough
-            # iGPU stays on host for GDM + Plex QuickSync
-            environment.etc."libvirt/hooks/qemu" = {
-              mode = "0755";
-              text = ''
-                #!/bin/sh
-                GUEST_NAME="$1"
-                HOOK_NAME="$2"
-                STATE_NAME="$3"
-
-                DGPU_PCI="0000:01:00.0"
-                DGPU_AUDIO_PCI="0000:01:00.1"
-
-                if [ "$GUEST_NAME" != "win11" ]; then
-                  exit 0
-                fi
-
-                bind_to_vfio() {
-                  local pci="$1"
-                  local current_driver="$2"
-                  if [ -n "$current_driver" ] && [ -e "/sys/bus/pci/drivers/$current_driver/$pci" ]; then
-                    echo "$pci" > "/sys/bus/pci/drivers/$current_driver/unbind"
-                  fi
-                  echo "vfio-pci" > "/sys/bus/pci/devices/$pci/driver_override"
-                  echo "$pci" > /sys/bus/pci/drivers/vfio-pci/bind 2>/dev/null || true
-                }
-
-                unbind_from_vfio() {
-                  local pci="$1"
-                  if [ -e "/sys/bus/pci/drivers/vfio-pci/$pci" ]; then
-                    echo "$pci" > /sys/bus/pci/drivers/vfio-pci/unbind
-                  fi
-                  echo "" > "/sys/bus/pci/devices/$pci/driver_override"
-                }
-
-                if [ "$HOOK_NAME" = "prepare" ] && [ "$STATE_NAME" = "begin" ]; then
-                  modprobe vfio-pci
-
-                  # Bind dGPU + audio to vfio-pci
-                  bind_to_vfio "$DGPU_PCI" "nouveau"
-                  bind_to_vfio "$DGPU_AUDIO_PCI" "snd_hda_intel"
-
-                elif [ "$HOOK_NAME" = "release" ] && [ "$STATE_NAME" = "end" ]; then
-                  # Release dGPU from vfio-pci
-                  unbind_from_vfio "$DGPU_PCI"
-                  unbind_from_vfio "$DGPU_AUDIO_PCI"
-
-                  sleep 1
-
-                  # Rescan PCI — nouveau reclaims the dGPU
-                  echo 1 > /sys/bus/pci/rescan
-                fi
-              '';
-            };
-
-            # Plex Media Server (with Intel QuickSync) + SpacetimeDB
-            virtualisation.oci-containers = {
-              backend = "docker";
-              containers.spacetimedb = {
-                image = "clockworklabs/spacetime:v1.12.0";
-                cmd = [ "start" ];
-                ports = [ "3000:3000" ];
-                volumes = [ "/var/lib/spacetimedb:/stdb" ];
-              };
-              containers.plex = {
-                image = "ghcr.io/hotio/plex:latest";
-                environment = {
-                  TZ = "Europe/Bucharest";
-                  PUID = "1000";
-                  PGID = "100";
-                  ADVERTISE_IP = "https://plex.christiantanul.com:443";
-                  ALLOWED_NETWORKS = "192.168.0.0/255.255.255.0";
-                };
-                volumes = [
-                  "/var/lib/plex:/config"
-                  "/mnt/nas/media:/data/media:ro"
-                ];
-                extraOptions = [
-                  "--network=host"
-                  "--device=/dev/dri:/dev/dri"
-                  "--tmpfs=/transcode"
-                ];
+            # Dotfiles webhook: listens on port 9876, runs git pull + just link
+            # when Gitea sends a push event. This keeps ~/dotfiles up to date
+            # and creates symlinks for new services automatically.
+            # Configure in Gitea: Settings → Webhooks → POST http://thinkcentre:9876
+            systemd.services.dotfiles-webhook = {
+              description = "Dotfiles Gitea webhook listener";
+              wantedBy = [ "multi-user.target" ];
+              after = [ "network.target" ];
+              path = with pkgs; [ git just nix ];
+              serviceConfig = {
+                User = "chris";
+                Group = "users";
+                ExecStart = pkgs.writeShellScript "dotfiles-webhook" ''
+                  cd /home/chris/dotfiles
+                  echo "Dotfiles webhook listening on port 9876..."
+                  while true; do
+                    echo -e "HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nok" | ${pkgs.netcat-gnu}/bin/nc -l -p 9876 > /dev/null 2>&1
+                    echo "$(date): webhook received, pulling..."
+                    git pull --ff-only 2>&1 || true
+                    echo "$(date): linking..."
+                    cd /home/chris/dotfiles/hosts/thinkcentre && just link 2>&1 || true
+                    cd /home/chris/dotfiles
+                    echo "$(date): done."
+                  done
+                '';
+                Restart = "always";
+                RestartSec = 5;
               };
             };
 
@@ -302,7 +223,8 @@
               defaultWindowManager = "${pkgs.gnome-session}/bin/gnome-session";
             };
 
-            # Cockpit web UI for managing VMs
+            # Cockpit: web-based system management UI (port 9090)
+            # Provides a browser dashboard for monitoring, terminal access, and VM management.
             services.cockpit = {
               enable = true;
               port = 9090;
@@ -314,27 +236,7 @@
                 };
               };
             };
-
-            # SSH
-            services.openssh = {
-              enable = true;
-              settings = {
-                PasswordAuthentication = false;
-                PermitRootLogin = "no";
-              };
-            };
-
-            # Tailscale
-            services.tailscale = {
-              enable = true;
-              openFirewall = true;
-              useRoutingFeatures = "client";
-              extraUpFlags = [
-                "--ssh"
-              ];
-            };
-
-            # libvirt-dbus system service (required for Cockpit VM management)
+            # libvirt-dbus bridge (required by Cockpit for VM management via cockpit-machines)
             users.groups.libvirtdbus = {};
             users.users.libvirtdbus = {
               isSystemUser = true;
@@ -354,8 +256,53 @@
               };
             };
 
+            # SSH
+            services.openssh = {
+              enable = true;
+              settings = {
+                PasswordAuthentication = false;
+                PermitRootLogin = "no";
+              };
+            };
+
+            # Syncthing (bidirectional sync of ~/Projects with Mac)
+            # See hosts/thinkcentre/SYNCTHING.md for details and gotchas.
+            services.syncthing = {
+              enable = true;
+              user = "chris";
+              group = "users";
+              dataDir = "/home/chris";
+              configDir = "/home/chris/.config/syncthing";
+              guiAddress = "0.0.0.0:8384";
+              settings = {
+                devices.macbook = {
+                  id = "HGJIECR-C6TTOJ2-N3XEQAN-CETD6W3-FFLJOUZ-RANRYYN-C2SRPH3-3VTAMQB";
+                  addresses = [ "dynamic" ];
+                  autoAcceptFolders = true;
+                };
+                folders.Projects = {
+                  id = "zd26e-jmupe";
+                  path = "/home/chris/Projects";
+                  devices = [ "macbook" ];
+                  fsWatcherDelayS = 1;
+                  fsWatcherEnabled = true;
+                };
+              };
+            };
+
+            # Tailscale
+            services.tailscale = {
+              enable = true;
+              openFirewall = true;
+              useRoutingFeatures = "client";
+              extraUpFlags = [
+                "--ssh"
+              ];
+            };
+
             environment.systemPackages = with pkgs; [
-              cockpit-machines         # VM management in Cockpit web UI
+              just                     # Task runner (Justfile)
+              cifs-utils               # SMB mounts for Synology NAS
               libvirt-dbus             # D-Bus bridge for libvirt (Cockpit dependency)
             ];
 

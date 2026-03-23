@@ -1,0 +1,19 @@
+services:
+  plex:
+    image: ghcr.io/hotio/plex:latest
+    container_name: plex
+    environment:
+      TZ: Europe/Bucharest
+      PUID: "1000"
+      PGID: "100"
+      ADVERTISE_IP: "https://plex.christiantanul.com:443"
+      ALLOWED_NETWORKS: "192.168.0.0/255.255.255.0"
+    volumes:
+      - ./config:/config
+      - /mnt/nas/media:/data/media:ro
+    network_mode: host
+    devices:
+      - /dev/dri:/dev/dri
+    tmpfs:
+      - /transcode
+    restart: unless-stopped

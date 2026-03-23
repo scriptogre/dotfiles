@@ -1,0 +1,19 @@
+services:
+  vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: vaultwarden
+    restart: unless-stopped
+    expose: [ 80 ]
+    networks:
+      - proxy
+      - default
+    volumes:
+      - ./vw-data:/data
+    environment:
+      - ADMIN_TOKEN=admin
+      - DOMAIN=https://vault.christiantanul.com
+      - SIGNUPS_ALLOWED=true
+
+networks:
+  proxy:
+    external: true

@@ -1,3 +1,32 @@
 .idea/
 .DS_Store
 result
+
+# Runtime data (ThinkCentre services)
+.env
+*.env
+*.hm-backup
+
+# Syncthing
+.stfolder
+.stversions
+.syncthing.*.tmp
+*.sync-conflict-*
+
+# Service runtime data
+**/data/
+**/vw-data/
+**/work/
+**/__pycache__/
+**/ssh/
+
+# Openclaw runtime
+hosts/thinkcentre/openclaw/config/agents/
+hosts/thinkcentre/openclaw/config/canvas/
+hosts/thinkcentre/openclaw/config/credentials/
+hosts/thinkcentre/openclaw/config/telegram/
+hosts/thinkcentre/openclaw/config/update-check.json
+hosts/thinkcentre/openclaw/config/skills/host-ssh/
+hosts/thinkcentre/openclaw/workspace/.openclaw/
+hosts/thinkcentre/openclaw/workspace/TOOLS.md
+hosts/thinkcentre/openclaw/healthclaw/data/

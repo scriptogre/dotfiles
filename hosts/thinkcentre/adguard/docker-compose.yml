@@ -1,0 +1,58 @@
+services:
+  adguard:
+    image: adguard/adguardhome
+    container_name: adguard
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "853:853/tcp"
+      - "8853:8853/udp"
+    expose:
+      - 3000
+      - 80
+    networks:
+      - proxy
+      - default
+    volumes:
+      - ./config:/opt/adguardhome/conf
+      - ./work:/opt/adguardhome/work
+    restart: unless-stopped
+
+  adguard-sync:
+    image: ghcr.io/bakito/adguardhome-sync
+    container_name: adguard-sync
+    command: run
+    environment:
+      - ORIGIN_URL=http://adguard:80
+      - ORIGIN_USERNAME=chris
+      - ORIGIN_PASSWORD=${ADGUARD_PASSWORD}
+      - REPLICA1_URL=http://100.114.162.56:8080
+      - REPLICA1_USERNAME=chris
+      - REPLICA1_PASSWORD=${ADGUARD_PASSWORD}
+      - CRON=*/15 * * * *
+      - FEATURES_DNS_SERVER_CONFIG=false
+      - FEATURES_DHCP_SERVER_CONFIG=false
+      - FEATURES_DHCP_STATIC_LEASES=false
+    expose:
+      - 8080
+    networks:
+      - proxy
+      - default
+    depends_on:
+      - adguard
+    restart: unless-stopped
+
+  adguard-monitor:
+    image: alpine
+    container_name: adguard-monitor
+    volumes:
+      - ./run_monitor.sh:/run_monitor.sh:ro
+    env_file: .env
+    command: sh /run_monitor.sh
+    depends_on:
+      - adguard
+    restart: unless-stopped
+
+networks:
+  proxy:
+    external: true

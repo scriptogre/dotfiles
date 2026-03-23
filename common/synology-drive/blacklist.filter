@@ -15,7 +15,7 @@ max_size = 0
 
 [Directory]
 black_name = ".idea", ".vscode", ".fleet",
-"node_modules", "dist", "target", "worktrees",
+"node_modules", "dist", "target",
 "__pycache__", ".mypy_cache", ".ruff_cache", ".pytest_cache",
 "venv", ".venv", ".tox", ".nox", "build", ".build",
 ".cache", ".parcel-cache", ".next", ".nuxt", ".svelte-kit",

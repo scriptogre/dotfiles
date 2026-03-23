@@ -1,0 +1,249 @@
+{
+    email contact@christiantanul.com
+}
+
+(lan-only) {
+  @denied {
+    not client_ip private_ranges  # LAN
+    not client_ip 100.64.0.0/10   # Tailscale
+  }
+  abort @denied
+}
+
+# - - - - - - - - - - - - -
+# Public
+# - - - - - - - - - - - - -
+
+# intreabalegea.ro
+www.intreabalegea.ro {
+    redir https://intreabalegea.ro{uri}
+}
+
+intreabalegea.ro {
+    reverse_proxy intreaba-legea-django-1:8000
+}
+
+staging.intreabalegea.ro {
+    reverse_proxy intreaba-legea-staging-fastapi-1:8000
+}
+
+analytics.intreabalegea.ro {
+    reverse_proxy plausible:8000
+}
+
+roastroulette.christiantanul.com {
+    @media path /uploads/*
+    handle @media {
+        root * /srv/media/django
+        file_server
+    }
+    reverse_proxy roast-roulette-django-1:8000
+}
+
+www.christiantanul.com {
+    redir https://christiantanul.com{uri}
+}
+
+christiantanul.com {
+    root * /srv/website
+    file_server
+    encode gzip
+    tls {
+        dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+    }
+}
+
+tanulchristian.dev, www.tanulchristian.dev {
+    redir https://christiantanul.com{uri}
+}
+
+bad-apple.christiantanul.com {
+    reverse_proxy bad-apple-fastapi-1:8000
+}
+
+analytics.christiantanul.com {
+	reverse_proxy umami:3000
+}
+
+clinical-trials-scout.alexandrutanul.com {
+	reverse_proxy clinical-trials-scout-fastapi-1:8000
+}
+
+browser-test.christiantanul.com {
+	reverse_proxy browser-test-app-1:8000
+}
+
+pgweb.alexandrutanul.com {
+	import lan-only
+	reverse_proxy clinical-trials-scout-pgweb-1:8081
+}
+
+# - - - - - - - - - - - - -
+# LAN-only
+# - - - - - - - - - - - - -
+
+adguard.christiantanul.com {
+    import lan-only
+    reverse_proxy adguard:80
+}
+
+syncthing.christiantanul.com {
+    import lan-only
+    reverse_proxy 192.168.0.12:8384
+}
+
+home-assistant.christiantanul.com {
+    import lan-only
+    reverse_proxy home-assistant:8123
+}
+
+vault.christiantanul.com {
+    import lan-only
+	reverse_proxy vaultwarden:80
+}
+
+health.christiantanul.com {
+    import lan-only
+    reverse_proxy healthclaw:8099
+}
+
+thinkcentre.christiantanul.com {
+    import lan-only
+    reverse_proxy 192.168.0.12:9090
+}
+
+plex.christiantanul.com {
+	reverse_proxy 192.168.0.12:32400
+}
+
+# - - - - - - - - - - - - -
+# Synology
+# - - - - - - - - - - - - -
+
+mail.alexandrutanul.com {
+	reverse_proxy 192.168.0.14:21680
+}
+
+mail.sebastiantanul.com {
+	reverse_proxy 192.168.0.14:21680
+}
+
+dsm.christiantanul.com {
+    reverse_proxy 192.168.0.14:5000
+}
+
+calendar.christiantanul.com {
+	reverse_proxy 192.168.0.14:20002
+}
+
+contacts.christiantanul.com {
+	reverse_proxy 192.168.0.14:25555
+}
+
+photos.christiantanul.com {
+	reverse_proxy 192.168.0.14:5080
+}
+
+drive.christiantanul.com {
+	reverse_proxy 192.168.0.14:10002
+}
+
+files.christiantanul.com {
+    reverse_proxy 192.168.0.14:7000
+}
+
+downloads.christiantanul.com {
+    import lan-only
+    reverse_proxy 192.168.0.14:1337
+}
+
+vms.christiantanul.com {
+    import lan-only
+    reverse_proxy 192.168.0.14:14640
+}
+
+cam.christiantanul.com {
+	import lan-only
+	reverse_proxy 192.168.0.14:9900
+}
+
+radarr.christiantanul.com {
+    import lan-only
+    reverse_proxy 192.168.0.14:7878
+}
+
+sonarr.christiantanul.com {
+    import lan-only
+    reverse_proxy 192.168.0.14:8989
+}
+
+qbittorrent.christiantanul.com {
+    import lan-only
+    reverse_proxy 192.168.0.14:9865
+}
+
+wakapi.christiantanul.com {
+    import lan-only
+    reverse_proxy 192.168.0.14:3000
+}
+
+jellyfin.christiantanul.com {
+    import lan-only
+    reverse_proxy 192.168.0.14:8096
+}
+
+gitea.christiantanul.com {
+	reverse_proxy 192.168.0.14:8418
+}
+
+# - - - - - - - - - - - - -
+# Synology 2
+# - - - - - - - - - - - - -
+
+dsm-2.christiantanul.com {
+  reverse_proxy 192.168.68.114:5000
+}
+
+# - - - - - - - - - - - - -
+# SpacetimeDB / Hyperspace
+# - - - - - - - - - - - - -
+
+game.christiantanul.com {
+    header Cross-Origin-Opener-Policy "same-origin"
+    header Cross-Origin-Embedder-Policy "require-corp"
+
+    @stdb path /v1/*
+    handle @stdb {
+        reverse_proxy 192.168.0.12:3000
+    }
+
+    handle {
+        root * /srv/game
+        file_server
+    }
+
+    encode gzip
+    tls {
+        dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+    }
+}
+
+hyperspace.christiantanul.com {
+    reverse_proxy 192.168.0.12:3000
+    tls {
+        dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+    }
+}
+
+# - - - - - - - - - - - - -
+# Proxmox
+# - - - - - - - - - - - - -
+
+proxmox.christiantanul.com {
+    import lan-only
+    reverse_proxy https://100.122.66.112:8006 {
+        transport http {
+            tls_insecure_skip_verify
+        }
+    }
+}

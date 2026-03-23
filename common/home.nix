@@ -51,6 +51,7 @@
     codex
     deno
     bun
+    nodejs
     rustup
 
     # Secrets management

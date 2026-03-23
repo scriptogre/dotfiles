@@ -1,0 +1,13 @@
+services:
+  spacetimedb:
+    image: ghcr.io/scriptogre/spacetimedb:hypermedia
+    container_name: spacetimedb
+    command: ["start"]
+    environment:
+      SPACETIMEDB_STATIC_DIR: /srv/hyperspace/static
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/stdb
+      - /srv/hyperspace/static:/srv/hyperspace/static:ro
+    restart: unless-stopped

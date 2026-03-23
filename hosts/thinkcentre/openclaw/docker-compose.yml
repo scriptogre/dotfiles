@@ -1,0 +1,65 @@
+services:
+  openclaw-gateway:
+    image: ${OPENCLAW_IMAGE:-ghcr.io/openclaw/openclaw:latest}
+    container_name: openclaw
+    env_file: .env
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      TZ: Europe/Bucharest
+    volumes:
+      - ./config:/home/node/.openclaw
+      - ./workspace:/home/node/.openclaw/workspace
+      - ./healthclaw/data:/home/node/.openclaw/healthclaw-data
+      - ./ssh:/home/node/.ssh:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "18789:18789"
+    init: true
+    restart: unless-stopped
+    command: ["node", "dist/index.js", "gateway", "--bind", "lan", "--port", "18789"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:18789/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  healthclaw:
+    build: ./healthclaw
+    container_name: healthclaw
+    env_file: .env
+    environment:
+      HEALTHCLAW_DB: /data/healthclaw.db
+    volumes:
+      - ./healthclaw/data:/data
+    ports:
+      - "8099:8099"
+    restart: unless-stopped
+    networks:
+      - default
+      - proxy
+
+  openclaw-cli:
+    image: ${OPENCLAW_IMAGE:-ghcr.io/openclaw/openclaw:latest}
+    container_name: openclaw-cli
+    network_mode: "service:openclaw-gateway"
+    env_file: .env
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      TZ: Europe/Bucharest
+    volumes:
+      - ./config:/home/node/.openclaw
+      - ./workspace:/home/node/.openclaw/workspace
+    stdin_open: true
+    tty: true
+    init: true
+    entrypoint: ["node", "dist/index.js"]
+    depends_on: [openclaw-gateway]
+    profiles: ["cli"]
+
+networks:
+  proxy:
+    external: true

@@ -1,0 +1,91 @@
+[
+  {
+    "name": "withings-token-refresh",
+    "schedule": {
+      "kind": "cron",
+      "expr": "0 */2 * * *",
+      "tz": "Europe/Bucharest"
+    },
+    "sessionTarget": "isolated",
+    "payload": {
+      "kind": "agentTurn",
+      "message": "Refresh the Withings OAuth tokens using the withings-oauth skill. Read the current refresh token from /home/node/.openclaw/withings-tokens.json, call the Withings token endpoint, and write the new tokens back to the same file. Only message me if it fails."
+    },
+    "delivery": {
+      "mode": "none"
+    },
+    "agentId": "fitness-coach"
+  },
+  {
+    "name": "hevy-workout-check",
+    "schedule": {
+      "kind": "cron",
+      "expr": "0 */4 * * *",
+      "tz": "Europe/Bucharest"
+    },
+    "sessionTarget": "session:hevy-poll",
+    "payload": {
+      "kind": "agentTurn",
+      "message": "Check Hevy for new workouts since your last check using the /v1/workouts/events endpoint. If you find a new workout, analyze the session: volume, intensity, PRs, areas for improvement. Deliver your analysis via Telegram. If no new workouts, do nothing — do not message."
+    },
+    "delivery": {
+      "mode": "announce",
+      "channel": "telegram"
+    },
+    "agentId": "fitness-coach"
+  },
+  {
+    "name": "morning-checkin",
+    "schedule": {
+      "kind": "cron",
+      "expr": "30 7 * * 1-5",
+      "tz": "Europe/Bucharest"
+    },
+    "sessionTarget": "isolated",
+    "payload": {
+      "kind": "agentTurn",
+      "message": "Morning check-in. Review: today's scheduled workout (from Hevy routines), latest Withings weigh-in, this week's training adherence so far, any notes from MEMORY.md. Only message the user if there is something genuinely useful or motivating to say. If it's a rest day and everything is on track, say nothing. Keep it brief — 2-3 sentences max."
+    },
+    "delivery": {
+      "mode": "announce",
+      "channel": "telegram"
+    },
+    "agentId": "fitness-coach"
+  },
+  {
+    "name": "inactivity-nudge",
+    "schedule": {
+      "kind": "cron",
+      "expr": "0 18 * * *",
+      "tz": "Europe/Bucharest"
+    },
+    "sessionTarget": "isolated",
+    "payload": {
+      "kind": "agentTurn",
+      "message": "Check the user's Hevy workout history and their stated training frequency in USER.md. If they have missed 2 or more scheduled training days in a row with no explanation in MEMORY.md, send a light, humorous nudge via Telegram. Do NOT nag — one message, keep it funny. If they're on track or within one day of schedule, say nothing."
+    },
+    "delivery": {
+      "mode": "announce",
+      "channel": "telegram"
+    },
+    "agentId": "fitness-coach"
+  },
+  {
+    "name": "weekly-review",
+    "schedule": {
+      "kind": "cron",
+      "expr": "0 10 * * 0",
+      "tz": "Europe/Bucharest"
+    },
+    "sessionTarget": "isolated",
+    "payload": {
+      "kind": "agentTurn",
+      "message": "Generate a weekly fitness review. Pull all Hevy workouts from this week, Withings weight/body comp trend, any heart rate data from memory logs. Summarize: total sessions, total volume, PRs hit, weight trend, adherence to plan. Compare to last week if data exists. Identify one thing that went well and one area to improve. If routine adjustments are warranted (stalls, imbalances), suggest them and offer to push updates to Hevy. Deliver via Telegram."
+    },
+    "delivery": {
+      "mode": "announce",
+      "channel": "telegram"
+    },
+    "agentId": "fitness-coach"
+  }
+]

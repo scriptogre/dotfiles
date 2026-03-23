@@ -1,45 +1,22 @@
-# CLAUDE.md
+# Dotfiles
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Nix-based declarative homelab configuration. Each machine has its own host directory — read its `flake.nix` to understand the setup.
 
-## Important: Applying Changes
+## Structure
 
-All files in this repo are managed by Nix/home-manager. **Editing files here does NOT immediately apply changes.**
+- `hosts/<hostname>/` — Per-host configuration (flake.nix, services, modules)
+- `common/` — Shared config (shell, git, ssh) imported by all hosts
+- `Justfile` — Available commands (rebuild, deploy, etc.)
 
-After any edit, run:
-```bash
-cd ~/Projects/dotfiles && just rebuild
-```
+## Principles
 
-This rebuilds the Nix configuration and symlinks files (like `~/.zshrc`) to the Nix store.
+- **Everything must be declarative.** All configuration is tracked in this repo and applied via
+  `nixos-rebuild` / `darwin-rebuild`. Never make imperative changes that a rebuild would overwrite.
+  If you need to change something, change it in the Nix config and rebuild.
+- **No manual state.** Service configs, firewall rules, system packages, user settings — all in flake.nix
+  or its imported modules. If it's not in the repo, it shouldn't exist on the machine.
 
-## Common Commands
+## System Tools
 
-- `just rebuild` - Applies configuration changes (runs `darwin-rebuild switch`)
-- `just update` - Updates Nix flakes to latest versions
-- `nix flake check` - Validates flake configuration
-
-## Architecture
-
-This is a Nix-based macOS configuration using nix-darwin and Home Manager. The setup is declarative and reproducible.
-
-**Key Files:**
-- `flake.nix` - Main configuration entry point defining system, user packages, and Homebrew apps
-- `Justfile` - Task runner with common operations
-- `gitignore` - Global git ignore file referenced in Home Manager config
-
-**Configuration Structure:**
-- System configuration (hostname: "macbook", user: "chris", aarch64-darwin)
-- Homebrew integration for GUI applications via nix-homebrew
-- Home Manager for user-level packages and dotfiles
-- Security settings include TouchID for sudo
-
-**Package Management:**
-- Nix packages defined in `home.packages` array (flake.nix:129-153)
-- GUI applications managed via Homebrew casks (flake.nix:79-109)
-- Git configuration managed declaratively (flake.nix:156-165)
-
-**Customization Points:**
-- Add new CLI tools to `home.packages` array
-- Add new GUI apps to `homebrew.casks` array
-- Modify user constants at top of flake.nix (system, username, hostname)
+- Use `bun` instead of `npm`/`npx`/`yarn`/`pnpm`
+- Use `uv` instead of `pip`/`pip3`/`pipx`, `uv run` to run Python scripts

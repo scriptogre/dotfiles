@@ -1,0 +1,119 @@
+{
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "anthropic/claude-sonnet-4-6"
+      },
+      "models": {
+        "anthropic/claude-sonnet-4-6": {
+          "alias": "sonnet",
+          "params": {
+            "cacheRetention": "short"
+          }
+        }
+      },
+      "workspace": "/home/node/.openclaw/workspace",
+      "bootstrapMaxChars": 20000,
+      "bootstrapTotalMaxChars": 150000,
+      "contextPruning": {
+        "mode": "cache-ttl",
+        "ttl": "1h"
+      },
+      "compaction": {
+        "mode": "safeguard"
+      },
+      "heartbeat": {
+        "every": "30m"
+      }
+    },
+    "list": [
+      {
+        "id": "fitness-coach",
+        "workspace": "/home/node/.openclaw/workspace"
+      }
+    ]
+  },
+  "bindings": [
+    {
+      "agentId": "fitness-coach",
+      "match": {
+        "channel": "telegram"
+      }
+    }
+  ],
+  "commands": {
+    "native": "auto",
+    "nativeSkills": "auto",
+    "restart": true,
+    "ownerDisplay": "raw"
+  },
+  "cron": {
+    "enabled": true,
+    "maxConcurrentRuns": 1,
+    "retry": {
+      "maxAttempts": 3,
+      "backoffMs": [
+        60000,
+        120000,
+        300000
+      ]
+    }
+  },
+  "hooks": {
+    "enabled": true,
+    "path": "/hooks",
+    "token": "b698efd5b41488d91c1102e1bce92bcf2e80b7282eb36af4a3757503809e561d",
+    "allowedAgentIds": [
+      "fitness-coach"
+    ]
+  },
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "dmPolicy": "pairing",
+      "groupPolicy": "allowlist",
+      "streaming": "partial"
+    }
+  },
+  "gateway": {
+    "mode": "local",
+    "auth": {
+      "mode": "token",
+      "token": "ec667d271b2b0bad21ecd47677c455b036df9a8c034d3e45"
+    },
+    "controlUi": {
+      "dangerouslyAllowHostHeaderOriginFallback": true
+    }
+  },
+  "meta": {
+    "lastTouchedVersion": "2026.3.13",
+    "lastTouchedAt": "2026-03-20T10:31:23.660Z"
+  },
+  "tools": {
+    "media": {
+      "audio": {
+        "enabled": true,
+        "models": [
+          {
+            "provider": "groq",
+            "model": "whisper-large-v3-turbo"
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini-transcribe"
+          }
+        ]
+      }
+    }
+  },
+  "messages": {
+    "tts": {
+      "auto": "inbound",
+      "provider": "openai",
+      "openai": {
+        "model": "gpt-4o-mini-tts",
+        "voice": "cedar"
+      }
+    }
+  }
+}

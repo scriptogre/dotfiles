@@ -21,7 +21,7 @@
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
           home-manager.backupFileExtension = "hm-backup";
-          home-manager.users.chris = { pkgs, lib, config, ... }: {
+          home-manager.users.chris = { pkgs, lib, ... }: {
             imports = [ ../../common/home.nix ];
             home.username = "chris";
             home.homeDirectory = "/home/chris";
@@ -38,10 +38,6 @@
             programs.zsh.initContent = lib.mkAfter ''
               export CDPATH=".:$HOME/Projects/dotfiles/hosts/thinkcentre:$HOME/Projects"
             '';
-
-            # Discoverable entry points in ~/
-            home.file."Justfile".source = config.lib.file.mkOutOfStoreSymlink "/home/chris/Projects/dotfiles/hosts/thinkcentre/Justfile";
-            home.file."README.md".source = config.lib.file.mkOutOfStoreSymlink "/home/chris/Projects/dotfiles/hosts/thinkcentre/README.md";
           };
         }
 

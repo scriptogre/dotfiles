@@ -1,5 +1,0 @@
-base := home_directory() / "Projects/dotfiles/hosts/thinkcentre"
-
-# Rebuild NixOS from flake
-rebuild:
-    sudo nixos-rebuild switch --flake {{base}}

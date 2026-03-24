@@ -2,6 +2,7 @@ services:
   caddy:
     build: .
     container_name: caddy
+    command: caddy run --config /etc/caddy/Caddyfile --adapter caddyfile --watch
     environment:
       - CLOUDFLARE_API_TOKEN
     ports:
@@ -16,32 +17,6 @@ services:
       - /home/chris/website/dist:/srv/website:ro
       - /home/chris/game/web:/srv/game:ro
     restart: always
-
-  # Auto-reload Caddy when Caddyfile changes (e.g. via Syncthing)
-  # Polls every 5s by checking file hash — works through symlinks and bind mounts.
-  caddy-reload:
-    image: alpine
-    container_name: caddy-reload
-    command: >
-      sh -c '
-      apk add --no-cache docker-cli > /dev/null 2>&1 &&
-      echo "Watching Caddyfile for changes (polling)..." &&
-      HASH="" &&
-      while true; do
-        NEW_HASH=$(md5sum /watch/Caddyfile 2>/dev/null | cut -d" " -f1) &&
-        if [ -n "$$HASH" ] && [ "$$HASH" != "$$NEW_HASH" ]; then
-          echo "Caddyfile changed, reloading Caddy..." &&
-          docker exec caddy caddy reload --config /etc/caddy/Caddyfile 2>&1 || echo "Reload failed";
-        fi &&
-        HASH=$$NEW_HASH &&
-        sleep 5;
-      done'
-    volumes:
-      - ./Caddyfile:/watch/Caddyfile:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    restart: always
-    depends_on:
-      - caddy
 
 volumes:
   roast-roulette_media:

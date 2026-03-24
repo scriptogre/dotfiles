@@ -14,8 +14,8 @@ services:
       - proxy
       - default
     volumes:
-      - ./config:/opt/adguardhome/conf
-      - ./work:/opt/adguardhome/work
+      - adguard_conf:/opt/adguardhome/conf
+      - adguard_work:/opt/adguardhome/work
     restart: unless-stopped
 
   adguard-sync:
@@ -42,16 +42,9 @@ services:
       - adguard
     restart: unless-stopped
 
-  adguard-monitor:
-    image: alpine
-    container_name: adguard-monitor
-    volumes:
-      - ./run_monitor.sh:/run_monitor.sh:ro
-    env_file: .env
-    command: sh /run_monitor.sh
-    depends_on:
-      - adguard
-    restart: unless-stopped
+volumes:
+  adguard_conf:
+  adguard_work:
 
 networks:
   proxy:

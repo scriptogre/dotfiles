@@ -10,17 +10,21 @@ services:
       - "443:443"
       - "443:443/udp"
     volumes:
-      - ./data:/data
-      - ./config:/config
+      - caddy_data:/data
+      - caddy_config:/config
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - roast-roulette_media:/srv/media/django:ro
-      - /home/chris/website/dist:/srv/website:ro
-      - /home/chris/game/web:/srv/game:ro
+      - website_dist:/srv/website:ro
+      - game_web:/srv/game:ro
     restart: always
 
 volumes:
   roast-roulette_media:
     external: true
+  caddy_data:
+  caddy_config:
+  website_dist:
+  game_web:
 
 networks:
   default:

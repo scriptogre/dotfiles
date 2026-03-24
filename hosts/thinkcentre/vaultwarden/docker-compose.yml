@@ -8,11 +8,14 @@ services:
       - proxy
       - default
     volumes:
-      - ./vw-data:/data
+      - vaultwarden_data:/data
     environment:
       - ADMIN_TOKEN=admin
       - DOMAIN=https://vault.christiantanul.com
       - SIGNUPS_ALLOWED=true
+
+volumes:
+  vaultwarden_data:
 
 networks:
   proxy:

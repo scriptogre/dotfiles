@@ -9,7 +9,7 @@ services:
       - proxy
       - default
     volumes:
-      - ./config:/config
+      - ha_config:/config
       - /etc/localtime:/etc/localtime:ro
       - /var/run/dbus:/run/dbus:ro
       - /mnt/nas/media_server:/media/synology_media_server
@@ -45,6 +45,9 @@ services:
   #     start_period: 60s
   #   init: true
   #   restart: unless-stopped
+
+volumes:
+  ha_config:
 
 networks:
   proxy:

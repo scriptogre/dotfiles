@@ -9,7 +9,7 @@ services:
       ADVERTISE_IP: "https://plex.christiantanul.com:443"
       ALLOWED_NETWORKS: "192.168.0.0/255.255.255.0"
     volumes:
-      - ./config:/config
+      - plex_config:/config
       - /mnt/nas/media:/data/media:ro
     network_mode: host
     devices:
@@ -17,3 +17,6 @@ services:
     tmpfs:
       - /transcode
     restart: unless-stopped
+
+volumes:
+  plex_config:

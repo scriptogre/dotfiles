@@ -21,7 +21,7 @@
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
           home-manager.backupFileExtension = "hm-backup";
-          home-manager.users.chris = { pkgs, lib, ... }: {
+          home-manager.users.chris = { pkgs, lib, config, ... }: {
             imports = [ ../../common/home.nix ];
             home.username = "chris";
             home.homeDirectory = "/home/chris";
@@ -33,6 +33,15 @@
                 lock-enabled = false;
               };
             };
+
+            # cd <service> from anywhere — resolves infra services then projects
+            programs.zsh.initContent = lib.mkAfter ''
+              export CDPATH=".:$HOME/Projects/dotfiles/hosts/thinkcentre:$HOME/Projects"
+            '';
+
+            # Discoverable entry points in ~/
+            home.file."Justfile".source = config.lib.file.mkOutOfStoreSymlink "/home/chris/Projects/dotfiles/hosts/thinkcentre/Justfile";
+            home.file."README.md".source = config.lib.file.mkOutOfStoreSymlink "/home/chris/Projects/dotfiles/hosts/thinkcentre/README.md";
           };
         }
 
@@ -91,7 +100,6 @@
                 5900   # VNC (Windows VM install)
                 8123   # Home Assistant
                 8384   # Syncthing GUI (behind Caddy lan-only)
-                9876   # Dotfiles webhook (Gitea push → git pull)
                 32400  # Plex
               ];
               allowedUDPPorts = [
@@ -160,39 +168,6 @@
 
             # Docker
             virtualisation.docker.enable = true;
-
-            # Dotfiles webhook: listens on port 9876, runs git pull + just link
-            # when Gitea sends a push event. This keeps ~/dotfiles up to date
-            # and creates symlinks for new services automatically.
-            # Configure in Gitea: Settings → Webhooks → POST http://thinkcentre:9876
-            systemd.services.dotfiles-webhook = {
-              description = "Dotfiles Gitea webhook listener";
-              wantedBy = [ "multi-user.target" ];
-              after = [ "network.target" ];
-              path = with pkgs; [ git just bash coreutils openssh ];
-              environment = {
-                HOME = "/home/chris";
-                GIT_SSH_COMMAND = "ssh -o StrictHostKeyChecking=accept-new";
-              };
-              serviceConfig = {
-                User = "chris";
-                Group = "users";
-                WorkingDirectory = "/home/chris/dotfiles";
-                ExecStart = pkgs.writeShellScript "dotfiles-webhook" ''
-                  echo "Dotfiles webhook listening on port 9876..."
-                  while true; do
-                    echo -e "HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nok" | ${pkgs.netcat-gnu}/bin/nc -l -p 9876 > /dev/null 2>&1
-                    echo "$(date): webhook received, pulling..."
-                    cd /home/chris/dotfiles && git pull --ff-only 2>&1 || true
-                    echo "$(date): linking..."
-                    cd /home/chris/dotfiles/hosts/thinkcentre && just link 2>&1 || true
-                    echo "$(date): done."
-                  done
-                '';
-                Restart = "always";
-                RestartSec = 5;
-              };
-            };
 
             # Desktop Environment (Wayland)
             services.xserver.enable = true;

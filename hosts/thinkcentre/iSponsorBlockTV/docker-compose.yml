@@ -4,4 +4,7 @@ services:
     container_name: iSponsorBlockTV
     restart: unless-stopped
     volumes:
-      - ./data:/app/data
+      - isponsorblocktv_data:/app/data
+
+volumes:
+  isponsorblocktv_data:

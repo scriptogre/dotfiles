@@ -8,6 +8,10 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./data:/stdb
-      - /srv/hyperspace/static:/srv/hyperspace/static:ro
+      - hyperspace_stdb:/stdb
+      - hyperspace_static:/srv/hyperspace/static:ro
     restart: unless-stopped
+
+volumes:
+  hyperspace_stdb:
+  hyperspace_static:

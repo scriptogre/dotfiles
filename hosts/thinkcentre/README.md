@@ -2,48 +2,59 @@
 
 ## How It Works
 
-The dotfiles repo is cloned to `~/dotfiles` on the ThinkCentre. Service directories
-(any directory here containing a `docker-compose.yml`) are symlinked into `~/` so that
-`~/caddy`, `~/adguard`, etc. point to `~/dotfiles/hosts/thinkcentre/caddy/`, etc.
+Everything lives in `~/Projects/`, synced from Mac via Syncthing. No separate git
+clone, no symlinks, no webhook.
 
-**The workflow:**
-1. Edit files on Mac (`~/Projects/dotfiles`) or ThinkCentre (`~/dotfiles`)
-2. Commit and push to Gitea
-3. Gitea webhook automatically runs `git pull` + `just link` on the ThinkCentre
-4. Services pick up changes (Caddy auto-reloads via the caddy-reload sidecar)
+**Infra services** (caddy, adguard, etc.) are in `dotfiles/hosts/thinkcentre/<service>/`.
+**Your projects** (roast-roulette, hyperspace, etc.) are in `~/Projects/<project>/`.
 
-For NixOS system changes (flake.nix), run `just` on the ThinkCentre or `just thinkcentre` from the Mac.
+Shell CDPATH is configured so `cd caddy` or `cd roast-roulette` works from anywhere.
 
-## Files
+## Quick Start
 
-- `flake.nix` — NixOS system config (users, networking, firewall, Docker, services)
-- `gaming-vm.nix` — Windows gaming VM with GPU passthrough (VFIO, libvirt, Cockpit)
-- `Justfile` — Task runner (symlinked to `~/Justfile`)
+```bash
+# See running containers
+docker ps
+
+# Navigate to a service
+cd caddy
+
+# Deploy/restart a service
+cd caddy && docker compose up -d
+
+# Rebuild NixOS
+just rebuild
+```
 
 ## Adding a New Service
 
-1. Create a directory here with a `docker-compose.yml`
-2. Commit and push
-3. The webhook runs `just link` which creates the `~/service` symlink automatically
-4. SSH in and `cd ~/service && docker compose up -d`
+1. Create a directory in `dotfiles/hosts/thinkcentre/<name>/` with a `docker-compose.yml`
+2. `cd <name>` works immediately (CDPATH)
+3. Create a `.env` file on ThinkCentre with production secrets
+4. `docker compose up -d`
 
-## Symlinks
+## Files
 
-`just link` auto-discovers directories with `docker-compose.yml` and creates:
+- `flake.nix` — NixOS system config (users, networking, firewall, Docker, Syncthing)
+- `gaming-vm.nix` — Windows gaming VM with GPU passthrough
+- `Justfile` — `just rebuild` to apply NixOS changes
+
+## .env Files
+
+- `.env` files contain production secrets and are gitignored + Syncthing-ignored
+- `.env.example` files document required variables
+- On ThinkCentre, `.env` contains `COMPOSE_FILE=docker-compose.production.yml`
+- On Mac, `.env` contains `COMPOSE_FILE=docker-compose.local.yml`
+
+## Docker Network
+
+All reverse-proxied services use the `proxy` external network. Create it once:
+
+```bash
+docker network create proxy
 ```
-~/caddy        → ~/dotfiles/hosts/thinkcentre/caddy/
-~/adguard      → ~/dotfiles/hosts/thinkcentre/adguard/
-~/Justfile     → ~/dotfiles/hosts/thinkcentre/Justfile
-```
-
-These are simple `ln -s` symlinks. No Nix store, no bind mounts.
-
-## Webhook
-
-A systemd service (`dotfiles-webhook`) listens on port 9876. Configure in Gitea:
-Repository → Settings → Webhooks → Add Webhook → POST `http://thinkcentre:9876`
 
 ## Native NixOS Services
 
-Some services run natively instead of Docker: syncthing, tailscale, cockpit, openssh.
-See `flake.nix` for their configuration.
+Syncthing, Tailscale, Cockpit, OpenSSH run as native NixOS services (not Docker).
+See `flake.nix` for configuration.

@@ -12,7 +12,12 @@ You can SSH into the ThinkCentre host machine:
 ssh -i /home/node/.ssh/id_ed25519 -o StrictHostKeyChecking=no chris@host.docker.internal
 ```
 This gives you full access to the host (NixOS, Docker, filesystem, etc.).
-Use this for backups, system management, running host-level commands, etc.
+
+### Navigation
+The shell has CDPATH configured, so you can `cd <service>` from anywhere:
+- `cd caddy` — infra services in `~/Projects/dotfiles/hosts/thinkcentre/`
+- `cd roast-roulette` — user projects in `~/Projects/`
+- `just rebuild` — apply NixOS changes (run from ~)
 
 ## Data Sources
 You have access to these via skills:

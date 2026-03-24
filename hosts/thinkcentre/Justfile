@@ -5,9 +5,13 @@ rebuild:
     #!/usr/bin/env bash
     set -euo pipefail
     cd {{base}}
+    export GIT_AUTHOR_NAME="nix" GIT_AUTHOR_EMAIL="nix@localhost"
+    export GIT_COMMITTER_NAME="nix" GIT_COMMITTER_EMAIL="nix@localhost"
     if [ ! -d .git ]; then
-      git init -q && git add -A && git commit -q -m "nix eval"
-    else
-      git add -A && git diff-index --quiet HEAD || git commit -q -m "nix eval"
+      git init -q
+      git -c commit.gpgsign=false commit -q --allow-empty -m "nix eval"
     fi
+    git add --ignore-errors -A 2>/dev/null || true
+    git -c commit.gpgsign=false diff-index --quiet HEAD || \
+      git -c commit.gpgsign=false commit -q -m "nix eval"
     sudo nixos-rebuild switch --flake {{base}}

@@ -14,7 +14,7 @@
       system = "x86_64-linux";
       modules = [
         ./hardware-configuration.nix
-        ./gaming-vm.nix
+        # ./gaming-vm.nix  # Disabled — reclaim 41GB disk space
         # Home Manager
         home-manager.nixosModules.home-manager
         {
@@ -160,6 +160,13 @@
                 "nofail" "x-systemd.automount" "x-systemd.idle-timeout=60"
                 "x-systemd.device-timeout=5s" "x-systemd.mount-timeout=5s"
               ];
+            };
+
+            # Nix garbage collection
+            nix.gc = {
+              automatic = true;
+              dates = "weekly";
+              options = "--delete-older-than 14d";
             };
 
             # Docker

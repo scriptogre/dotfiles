@@ -268,9 +268,12 @@
             services.tailscale = {
               enable = true;
               openFirewall = true;
-              useRoutingFeatures = "client";
+              useRoutingFeatures = "server";
               extraUpFlags = [
                 "--ssh"
+                "--advertise-exit-node"
+                "--advertise-routes=192.168.0.0/24"
+                "--accept-dns=false"
               ];
             };
 

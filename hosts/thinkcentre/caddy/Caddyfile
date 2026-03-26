@@ -229,7 +229,7 @@ game.christiantanul.com {
 }
 
 hyperspace.christiantanul.com {
-    reverse_proxy 192.168.0.12:3000
+    reverse_proxy spacetimedb:3000
     tls {
         dns cloudflare {env.CLOUDFLARE_API_TOKEN}
     }

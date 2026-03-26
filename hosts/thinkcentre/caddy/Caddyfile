@@ -1,5 +1,6 @@
 {
     email contact@christiantanul.com
+    acme_dns cloudflare {env.CLOUDFLARE_API_TOKEN}
 }
 
 (lan-only) {
@@ -48,9 +49,6 @@ christiantanul.com {
     root * /srv/website
     file_server
     encode gzip
-    tls {
-        dns cloudflare {env.CLOUDFLARE_API_TOKEN}
-    }
 }
 
 tanulchristian.dev, www.tanulchristian.dev {
@@ -201,7 +199,7 @@ gitea.christiantanul.com {
 # - - - - - - - - - - - - -
 
 dsm-2.christiantanul.com {
-  reverse_proxy 192.168.68.114:5000
+    reverse_proxy 192.168.68.114:5000
 }
 
 # - - - - - - - - - - - - -
@@ -223,16 +221,10 @@ game.christiantanul.com {
     }
 
     encode gzip
-    tls {
-        dns cloudflare {env.CLOUDFLARE_API_TOKEN}
-    }
 }
 
 hyperspace.christiantanul.com {
     reverse_proxy spacetimedb:3000
-    tls {
-        dns cloudflare {env.CLOUDFLARE_API_TOKEN}
-    }
 }
 
 # - - - - - - - - - - - - -

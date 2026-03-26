@@ -1,4 +1,8 @@
 services:
+  # Mirrors all GitHub repos to Gitea as pull mirrors.
+  # Gitea handles ongoing git sync automatically (every MIRROR_INTERVAL).
+  # This container checks for NEW GitHub repos every SYNC_INTERVAL
+  # and creates Gitea mirrors for any that don't exist yet.
   gitea-mirror-sync:
     build: .
     container_name: gitea-mirror-sync
@@ -6,6 +10,7 @@ services:
     mem_limit: 64m
     restart: unless-stopped
     healthcheck:
+      # Healthy if last sync was less than 2x SYNC_INTERVAL ago
       test: ["CMD", "python3", "-c", "import json,sys; from datetime import datetime,timezone,timedelta; d=json.load(open('/tmp/healthcheck')); t=datetime.fromisoformat(d['last_check']); sys.exit(0 if d['status']!='unhealthy' and (datetime.now(timezone.utc)-t)<timedelta(hours=50) else 1)"]
       interval: 60s
       timeout: 5s

@@ -171,6 +171,11 @@
 
             # Docker
             virtualisation.docker.enable = true;
+            # Route container DNS through AdGuard so they resolve local domains
+            # (e.g. gitea.christiantanul.com → 192.168.0.14) instead of going through Cloudflare
+            virtualisation.docker.daemon.settings = {
+              dns = [ "192.168.0.12" ];
+            };
 
             # Desktop Environment (Wayland)
             services.xserver.enable = true;

@@ -46,7 +46,13 @@
 
           # Daily Auto-Update
           launchd.user.agents.daily-update = {
-            serviceConfig.StartCalendarInterval = [ { Hour = 3; Minute = 0; } ];
+            serviceConfig = {
+              StartCalendarInterval = [ { Hour = 3; Minute = 0; } ];
+              # Don't kill child processes when the agent is reloaded.
+              # darwin-rebuild reloads this agent during activation, which
+              # would otherwise kill the running update script.
+              AbandonProcessGroup = true;
+            };
 
             script = let
               host = config.networking.hostName;
@@ -57,39 +63,43 @@
               logFile = "${home}/Library/Logs/nix-daily-update.log";
               brew = "/opt/homebrew/bin/brew";
             in ''
-              # Raise file descriptor limit (macOS launchd default of 256 is too low for nix)
-              ulimit -n 65536
+              # Fork the update into a background process so it survives the
+              # launchd agent being reloaded by darwin-rebuild during activation.
+              {
+                # Raise file descriptor limit (macOS launchd default of 256 is too low for nix)
+                ulimit -n 65536
 
-              # Add git and other tools to path
-              export PATH="/etc/profiles/per-user/${config.system.primaryUser}/bin:$PATH"
+                # Add git and other tools to path
+                export PATH="/etc/profiles/per-user/${config.system.primaryUser}/bin:$PATH"
 
-              echo "Starting daily update at $(date)" >> ${logFile}
-              cd ${repoPath}
+                echo "Starting daily update at $(date)" >> ${logFile}
+                cd ${repoPath}
 
-              # Update flake inputs first (before quitting any apps)
-              if ! ${nix} flake update --flake ./hosts/${host} >> ${logFile} 2>&1; then
-                echo "Flake update failed at $(date)" >> ${logFile}
-                /usr/bin/osascript -e 'display notification "Flake update failed. Check ${logFile}" with title "Daily Update" subtitle "Failure"'
-                exit 1
-              fi
-
-              # Only quit apps after flake update succeeds
-              RUNNING_APPS=("Brave Browser" "Google Chrome" "Firefox" "Discord" "Spotify" "Obsidian" "Telegram")
-              for app in "''${RUNNING_APPS[@]}"; do
-                if pgrep -x "$app" > /dev/null; then
-                  echo "Quitting $app for updates..." >> ${logFile}
-                  osascript -e "quit app \"$app\"" 2>> ${logFile} || true
+                # Update flake inputs first (before quitting any apps)
+                if ! ${nix} flake update --flake ./hosts/${host} >> ${logFile} 2>&1; then
+                  echo "Flake update failed at $(date)" >> ${logFile}
+                  /usr/bin/osascript -e 'display notification "Flake update failed. Check ${logFile}" with title "Daily Update" subtitle "Failure"'
+                  exit 1
                 fi
-              done
-              sleep 5
 
-              if sudo ${darwin-rebuild} switch --flake ./hosts/${host}#${host} >> ${logFile} 2>&1; then
-                echo "Update successful at $(date)" >> ${logFile}
-                /usr/bin/osascript -e 'display notification "System updated successfully" with title "Daily Update"'
-              else
-                echo "Rebuild failed at $(date)" >> ${logFile}
-                /usr/bin/osascript -e 'display notification "Darwin rebuild failed. Check ${logFile}" with title "Daily Update" subtitle "Failure"'
-              fi
+                # Only quit apps after flake update succeeds
+                RUNNING_APPS=("Brave Browser" "Google Chrome" "Firefox" "Discord" "Spotify" "Obsidian" "Telegram")
+                for app in "''${RUNNING_APPS[@]}"; do
+                  if pgrep -x "$app" > /dev/null; then
+                    echo "Quitting $app for updates..." >> ${logFile}
+                    osascript -e "quit app \"$app\"" 2>> ${logFile} || true
+                  fi
+                done
+                sleep 5
+
+                if sudo ${darwin-rebuild} switch --flake ./hosts/${host}#${host} >> ${logFile} 2>&1; then
+                  echo "Update successful at $(date)" >> ${logFile}
+                  /usr/bin/osascript -e 'display notification "System updated successfully" with title "Daily Update"'
+                else
+                  echo "Rebuild failed at $(date)" >> ${logFile}
+                  /usr/bin/osascript -e 'display notification "Darwin rebuild failed. Check ${logFile}" with title "Daily Update" subtitle "Failure"'
+                fi
+              } &
             '';
           };
         })

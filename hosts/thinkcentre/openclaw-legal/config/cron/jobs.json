@@ -1,0 +1,19 @@
+[
+  {
+    "name": "git-sync",
+    "schedule": {
+      "kind": "cron",
+      "expr": "*/30 * * * *",
+      "tz": "Europe/Bucharest"
+    },
+    "sessionTarget": "isolated",
+    "payload": {
+      "kind": "agentTurn",
+      "message": "Run a git pull on the dosar-maghieru repo to pick up any new commits from Christian or his brother. Navigate to /home/node/dosar-maghieru, run git checkout main and git pull. If the pull fails due to conflicts or dirty state, delete the repo and re-clone: rm -rf /home/node/dosar-maghieru && git clone https://github.com/scriptogre/dosar-maghieru.git /home/node/dosar-maghieru. Do not message anyone about this — only report errors if the re-clone also fails."
+    },
+    "delivery": {
+      "mode": "none"
+    },
+    "agentId": "legal-assistant"
+  }
+]

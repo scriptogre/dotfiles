@@ -1,0 +1,87 @@
+x-common: &common
+  environment: &common-env
+    PUID: ${PUID}
+    PGID: ${PGID}
+    TZ: ${TZ}
+    UMASK: 002
+
+services:
+  # Sonarr: Automated TV show management
+  sonarr:
+    <<: *common
+    container_name: sonarr
+    image: ghcr.io/hotio/sonarr:release
+    ports:
+      - "8989:8989"
+    volumes:
+      - ./sonarr_config:/config
+      - ${MEDIA_SERVER_DATA_DIR}:/data
+
+  # Radarr: Automated movie management
+  radarr:
+    <<: *common
+    container_name: radarr
+    image: ghcr.io/hotio/radarr:release
+    ports:
+      - "7878:7878"
+    volumes:
+      - ./radarr_config:/config
+      - ${MEDIA_SERVER_DATA_DIR}:/data
+
+  # Prowlarr: Indexer manager
+  prowlarr:
+    <<: *common
+    container_name: prowlarr
+    image: ghcr.io/hotio/prowlarr:testing
+    ports:
+      - "9696:9696"
+    volumes:
+      - ./prowlarr_config:/config:rw
+
+  # qBittorrent: Torrent client
+  qbittorrent:
+    <<: *common
+    container_name: qbittorrent
+    image: ghcr.io/hotio/qbittorrent:release
+    ports:
+      - "6881:6881/tcp"
+      - "6881:6881/udp"
+      - "9865:9865"
+    environment:
+      <<: *common-env
+      WEBUI_PORTS: "9865/tcp,9865/udp"
+    volumes:
+      - ./qbittorrent_config:/config
+      - ${MEDIA_SERVER_DATA_DIR}/torrents:/data/torrents
+
+
+  # Recyclarr: TRaSH guides sync
+  recyclarr:
+    <<: *common
+    container_name: recyclarr
+    image: ghcr.io/recyclarr/recyclarr
+    user: ${PUID}:${PGID}
+    volumes:
+      - ./recyclarr_config:/config
+    environment:
+      TZ: ${TZ}
+      RADARR_BASE_URL: ${RADARR_BASE_URL}
+      RADARR_API_KEY: ${RADARR_API_KEY}
+      SONARR_BASE_URL: ${SONARR_BASE_URL}
+      SONARR_API_KEY: ${SONARR_API_KEY}
+
+  # Jellyfin: Open-source media server
+  jellyfin:
+    <<: *common
+    container_name: jellyfin
+    image: jellyfin/jellyfin:latest
+    ports:
+      - "8096:8096"
+      - "8920:8920"   # HTTPS (optional)
+      - "7359:7359/udp" # Service discovery
+      # - "1900:1900/udp" # DLNA discovery (disabled - conflicts with Plex)
+    volumes:
+      - ./jellyfin_config:/config
+      - ./jellyfin_config/cache:/cache
+      - ${MEDIA_SERVER_DATA_DIR}:/data:ro
+    restart: unless-stopped

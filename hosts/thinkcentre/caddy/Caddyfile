@@ -1,6 +1,11 @@
 {
     email contact@christiantanul.com
-    acme_dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+}
+
+(cf-tls) {
+    tls {
+        dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+    }
 }
 
 (lan-only) {
@@ -17,22 +22,27 @@
 
 # intreabalegea.ro
 www.intreabalegea.ro {
+    import cf-tls
     redir https://intreabalegea.ro{uri}
 }
 
 intreabalegea.ro {
+    import cf-tls
     reverse_proxy intreaba-legea-django-1:8000
 }
 
 staging.intreabalegea.ro {
+    import cf-tls
     reverse_proxy intreaba-legea-staging-fastapi-1:8000
 }
 
 analytics.intreabalegea.ro {
+    import cf-tls
     reverse_proxy plausible:8000
 }
 
 roastroulette.christiantanul.com {
+    import cf-tls
     @media path /uploads/*
     handle @media {
         root * /srv/media/django
@@ -42,38 +52,51 @@ roastroulette.christiantanul.com {
 }
 
 www.christiantanul.com {
+    import cf-tls
     redir https://christiantanul.com{uri}
 }
 
 christiantanul.com {
+    import cf-tls
     root * /srv/website
     file_server
     encode gzip
 }
 
 tanulchristian.dev, www.tanulchristian.dev {
+    import cf-tls
     redir https://christiantanul.com{uri}
 }
 
 bad-apple.christiantanul.com {
+    import cf-tls
     reverse_proxy bad-apple-fastapi-1:8000
 }
 
 analytics.christiantanul.com {
-	reverse_proxy umami:3000
+    import cf-tls
+    reverse_proxy umami:3000
 }
 
 clinical-trials-scout.alexandrutanul.com {
-	reverse_proxy clinical-trials-scout-fastapi-1:8000
+    import cf-tls
+    reverse_proxy clinical-trials-scout-fastapi-1:8000
 }
 
 browser-test.christiantanul.com {
-	reverse_proxy browser-test-app-1:8000
+    import cf-tls
+    reverse_proxy browser-test-app-1:8000
 }
 
 pgweb.alexandrutanul.com {
-	import lan-only
-	reverse_proxy clinical-trials-scout-pgweb-1:8081
+    import cf-tls
+    import lan-only
+    reverse_proxy clinical-trials-scout-pgweb-1:8081
+}
+
+game.razvanaga.com {
+    reverse_proxy razvanaga-prod-app-1:3000
+
 }
 
 # - - - - - - - - - - - - -
@@ -81,37 +104,44 @@ pgweb.alexandrutanul.com {
 # - - - - - - - - - - - - -
 
 adguard.christiantanul.com {
+    import cf-tls
     import lan-only
     reverse_proxy adguard:80
 }
 
 syncthing.christiantanul.com {
+    import cf-tls
     import lan-only
     reverse_proxy 192.168.0.12:8384
 }
 
 home-assistant.christiantanul.com {
+    import cf-tls
     import lan-only
     reverse_proxy home-assistant:8123
 }
 
 vault.christiantanul.com {
+    import cf-tls
     import lan-only
-	reverse_proxy vaultwarden:80
+    reverse_proxy vaultwarden:80
 }
 
 health.christiantanul.com {
+    import cf-tls
     import lan-only
     reverse_proxy healthclaw:8099
 }
 
 thinkcentre.christiantanul.com {
+    import cf-tls
     import lan-only
     reverse_proxy 192.168.0.12:9090
 }
 
 plex.christiantanul.com {
-	reverse_proxy 192.168.0.12:32400
+    import cf-tls
+    reverse_proxy 192.168.0.12:32400
 }
 
 # - - - - - - - - - - - - -
@@ -119,79 +149,96 @@ plex.christiantanul.com {
 # - - - - - - - - - - - - -
 
 mail.alexandrutanul.com {
-	reverse_proxy 192.168.0.14:21680
+    import cf-tls
+    reverse_proxy 192.168.0.14:21680
 }
 
 mail.sebastiantanul.com {
-	reverse_proxy 192.168.0.14:21680
+    import cf-tls
+    reverse_proxy 192.168.0.14:21680
 }
 
 dsm.christiantanul.com {
+    import cf-tls
     reverse_proxy 192.168.0.14:5000
 }
 
 calendar.christiantanul.com {
-	reverse_proxy 192.168.0.14:20002
+    import cf-tls
+    reverse_proxy 192.168.0.14:20002
 }
 
 contacts.christiantanul.com {
-	reverse_proxy 192.168.0.14:25555
+    import cf-tls
+    reverse_proxy 192.168.0.14:25555
 }
 
 photos.christiantanul.com {
-	reverse_proxy 192.168.0.14:5080
+    import cf-tls
+    reverse_proxy 192.168.0.14:5080
 }
 
 drive.christiantanul.com {
-	reverse_proxy 192.168.0.14:10002
+    import cf-tls
+    reverse_proxy 192.168.0.14:10002
 }
 
 files.christiantanul.com {
+    import cf-tls
     reverse_proxy 192.168.0.14:7000
 }
 
 downloads.christiantanul.com {
+    import cf-tls
     import lan-only
     reverse_proxy 192.168.0.14:1337
 }
 
 vms.christiantanul.com {
+    import cf-tls
     import lan-only
     reverse_proxy 192.168.0.14:14640
 }
 
 cam.christiantanul.com {
-	import lan-only
-	reverse_proxy 192.168.0.14:9900
+    import cf-tls
+    import lan-only
+    reverse_proxy 192.168.0.14:9900
 }
 
 radarr.christiantanul.com {
+    import cf-tls
     import lan-only
     reverse_proxy 192.168.0.14:7878
 }
 
 sonarr.christiantanul.com {
+    import cf-tls
     import lan-only
     reverse_proxy 192.168.0.14:8989
 }
 
 qbittorrent.christiantanul.com {
+    import cf-tls
     import lan-only
     reverse_proxy 192.168.0.14:9865
 }
 
 wakapi.christiantanul.com {
+    import cf-tls
     import lan-only
     reverse_proxy 192.168.0.14:3000
 }
 
 jellyfin.christiantanul.com {
+    import cf-tls
     import lan-only
     reverse_proxy 192.168.0.14:8096
 }
 
 gitea.christiantanul.com {
-	reverse_proxy 192.168.0.14:8418
+    import cf-tls
+    reverse_proxy 192.168.0.14:8418
 }
 
 # - - - - - - - - - - - - -
@@ -199,6 +246,7 @@ gitea.christiantanul.com {
 # - - - - - - - - - - - - -
 
 dsm-2.christiantanul.com {
+    import cf-tls
     reverse_proxy 192.168.68.114:5000
 }
 
@@ -207,6 +255,7 @@ dsm-2.christiantanul.com {
 # - - - - - - - - - - - - -
 
 game.christiantanul.com {
+    import cf-tls
     header Cross-Origin-Opener-Policy "same-origin"
     header Cross-Origin-Embedder-Policy "require-corp"
 
@@ -224,6 +273,7 @@ game.christiantanul.com {
 }
 
 hyperspace.christiantanul.com {
+    import cf-tls
     reverse_proxy spacetimedb:3000
 }
 
@@ -232,6 +282,7 @@ hyperspace.christiantanul.com {
 # - - - - - - - - - - - - -
 
 proxmox.christiantanul.com {
+    import cf-tls
     import lan-only
     reverse_proxy https://100.122.66.112:8006 {
         transport http {

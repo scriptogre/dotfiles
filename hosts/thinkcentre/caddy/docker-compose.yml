@@ -16,6 +16,7 @@ services:
       - roast-roulette_media:/srv/media/django:ro
       - website_dist:/srv/website:ro
       - game_web:/srv/game:ro
+      - /tmp/razvanaga:/srv/razvanaga:ro
     restart: always
 
 volumes:

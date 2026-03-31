@@ -15,7 +15,7 @@
 ## Goals
 - **Primary goal:** Cut to 76kg, get leaner/more shredded
 - **Secondary goals:** Maintain strength during cut
-- **Target weight:** 76kg (currently 81.85kg as of March 2026, ~22-24% body fat)
+- **Target weight:** 76kg (currently 83.24kg as of March 26 2026, ~22.7% body fat)
 
 ## Training Background
 - **Experience level:** Advanced

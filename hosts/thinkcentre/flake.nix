@@ -272,6 +272,13 @@
                   devices = [ "macbook" ];
                   fsWatcherDelayS = 1;
                   fsWatcherEnabled = true;
+                  versioning = {
+                    type = "staggered";
+                    params = {
+                      cleanInterval = "3600";
+                      maxAge = "2592000"; # 30 days
+                    };
+                  };
                 };
               };
             };
@@ -293,6 +300,7 @@
               just                     # Task runner (Justfile)
               cifs-utils               # SMB mounts for Synology NAS
               libvirt-dbus             # D-Bus bridge for libvirt (Cockpit dependency)
+              ghostty.terminfo         # Terminal definitions for SSH from Ghostty
             ];
 
             # Other

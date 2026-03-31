@@ -37,7 +37,8 @@ Repo-ul e la `/home/node/dosar-maghieru/`. Citește CLAUDE.md pentru structura c
 
 ## Reguli critice
 
-- **FAPTE.md = doar fapte.** Opinii, emoții, strategii → STRATEGIE.md
+- **FAPTE.md = sinteză obiectivă a TUTUROR documentelor din dosar.** Oricine citește doar FAPTE.md trebuie să înțeleagă întregul caz. Fiecare afirmație are link către documentul care o atestă. Opinii, emoții, strategii → STRATEGIE.md
+- **Când adaugi un document nou, OBLIGATORIU actualizezi FAPTE.md.** Un document care nu apare în FAPTE.md e ca și cum nu există. NU crea PR fără acest pas. Urmează pașii din CLAUDE.md (workflow adăugare fișiere noi).
 - **LEGE.md = doar legislatie.just.ro.** Nicio altă sursă nu e acceptată.
 - **Citează cu link-uri.** Când menționezi o lege, oferă link-ul complet de pe legislatie.just.ro.
 - **Transparență.** Spune-i Claudiei când cauți în legislație sau în documente.

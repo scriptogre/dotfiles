@@ -8,7 +8,7 @@ Repo-ul este la `/home/node/dosar-maghieru/`. Citește mereu `FAPTE.md` complet 
 
 ## Workflow Git
 
-- **Înainte de a citi orice fișier:** `cd /home/node/dosar-maghieru && git checkout main && git pull`
+- **Înainte de a citi orice fișier:** `cd /home/node/dosar-maghieru && git checkout master && git pull && cp CLAUDE.md /home/node/.openclaw/workspace/BOOT.md`
 - **Nu face commit pe main.** Creează branch-uri: `claudia/<topic-descriptiv>` (ex: `claudia/expertiza-ionita`)
 - **Push și PR:** După ce faci commit pe branch, push și creează PR cu `gh pr create`
 - **Autentificare git:** Token-ul din env var `GITHUB_TOKEN` — configurează cu:
@@ -60,6 +60,32 @@ Când ceva e prea complex sau dincolo de capabilitățile tale, spune-i Claudiei
 - După conversații importante, actualizează MEMORY.md cu informații cheie
 - Când Claudia oferă context nou, actualizează USER.md
 
-## PDF-uri
+## Când Claudia trimite un PDF
 
-**NU citi niciodată fișiere PDF direct.** Trimite-le la Gemini pentru transcriere și citește doar rezultatul .md. Vezi skill-ul `gemini-transcription` pentru detalii.
+**NICIODATĂ nu tragi concluzii despre un document înainte de a-l citi.**
+
+Tool-ul `pdf` folosește Gemini pentru transcriere. Poți citi PDF-uri direct cu tool-ul `pdf`.
+
+Workflow obligatoriu — în ordine:
+
+1. **Spune-i Claudiei:** „Procesez documentul, un moment." (nu analiza, nu concluzii, nu speculații)
+2. **Verifică dacă documentul există deja** — listează fișierele din repo și caută după nume similar sau conținut similar
+3. **Dacă există `.md`:** citește transcrierea existentă
+4. **Dacă NU există `.md`:** folosește tool-ul `pdf` cu promptul de transcriere verbatim (vezi mai jos), salvează rezultatul ca `.md` lângă PDF, apoi citește transcrierea
+5. **Abia acum** poți răspunde Claudiei despre conținutul documentului
+6. **Urmează workflow-ul din CLAUDE.md** pentru actualizarea FAPTE.md, STRATEGIE.md, și crearea PR-ului
+
+**Promptul pentru transcriere PDF:**
+```
+Transcrie acest document PDF în format Markdown. Păstrează structura originală. Marchează paginile cu **— PAGINA N —**. Notează ștampilele cu [Ștampilă: DESCRIERE]. Notează semnăturile cu [Semnătură: NUME]. Păstrează tot textul original, inclusiv date, numere, nume. Nu omite nimic. Nu traduce — păstrează limba originală. FOARTE IMPORTANT: Dacă un cuvânt sau fragment NU se poate citi clar, scrie [greu lizibil] în loc. NU inventa sau ghici cuvinte — e mai bine să marchezi [greu lizibil] decât să scrii un cuvânt greșit. Acuratețea e critică: acest text va fi folosit ca probă juridică.
+```
+
+**Fișierul `.md` salvat trebuie să aibă frontmatter:**
+```yaml
+---
+verificat: false
+nota: "Transcriere Gemini — de verificat manual cu PDF-ul original"
+---
+```
+
+**NU sări peste pașii 1-5.** Nu răspunde niciodată despre conținutul unui document pe baza presupunerilor tale — doar pe baza textului citit din `.md`.

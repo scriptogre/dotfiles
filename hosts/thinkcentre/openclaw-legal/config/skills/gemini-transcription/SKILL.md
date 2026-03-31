@@ -23,7 +23,7 @@ Dacă nu știi sursa sau data, întreab-o pe Claudia.
 ### Pas 2: Trimite la Gemini
 
 ```bash
-curl -s "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$GEMINI_API_KEY" \
+curl -s "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=$GEMINI_API_KEY" \
   -H "Content-Type: application/json" \
   -d "$(jq -n \
     --arg pdf_b64 "$(base64 -w0 /home/node/dosar-maghieru/path/to/file.pdf)" \
@@ -37,7 +37,7 @@ curl -s "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flas
             }
           },
           {
-            "text": "Transcrie acest document PDF în format Markdown. Păstrează structura originală. Marchează paginile cu **— PAGINA N —**. Notează textul greu lizibil cu [greu lizibil]. Notează ștampilele cu [Ștampilă: DESCRIERE]. Notează semnăturile cu [Semnătură: NUME]. Păstrează tot textul original, inclusiv date, numere, nume. Nu omite nimic. Nu traduce — păstrează limba originală."
+            "text": "Transcrie acest document PDF în format Markdown. Păstrează structura originală. Marchează paginile cu **— PAGINA N —**. Notează ștampilele cu [Ștampilă: DESCRIERE]. Notează semnăturile cu [Semnătură: NUME]. Păstrează tot textul original, inclusiv date, numere, nume. Nu omite nimic. Nu traduce — păstrează limba originală. FOARTE IMPORTANT: Dacă un cuvânt sau fragment NU se poate citi clar, scrie [greu lizibil] în loc. NU inventa sau ghici cuvinte — e mai bine să marchezi [greu lizibil] decât să scrii un cuvânt greșit. Acuratețea e critică: acest text va fi folosit ca probă juridică."
           }
         ]
       }]
@@ -53,14 +53,28 @@ Extrage textul din răspunsul JSON și salvează-l ca `.md` lângă PDF:
 # Salvează ca: path/to/file.md (același nume, extensie diferită)
 ```
 
-Dacă fișierul e în `04-Documente-Suport/` și e relevant pentru mai multe dosare, adaugă frontmatter:
+**OBLIGATORIU:** Toate transcrierile Gemini trebuie să aibă frontmatter cu `verificat: false`. Acesta indică faptul că transcrierea nu a fost verificată manual de un om.
+
+Dacă fișierul e în `04-Documente-Suport/` și e relevant pentru mai multe dosare:
 ```yaml
 ---
+verificat: false
+nota: "Transcriere Gemini — de verificat manual cu PDF-ul original"
 dosare:
   - partaj
   - apel
 ---
 ```
+
+Dacă fișierul e într-un folder specific (`01-Partaj/`, `02-Apel/`, `03-Penal/`):
+```yaml
+---
+verificat: false
+nota: "Transcriere Gemini — de verificat manual cu PDF-ul original"
+---
+```
+
+**NU omite niciodată frontmatter-ul `verificat: false`.** Christian va verifica manual transcrierile și va schimba la `verificat: true` după verificare.
 
 ### Pas 4: Citește transcrierea
 
@@ -77,7 +91,7 @@ Când o întrebare juridică necesită cercetare din mai multe perspective:
 ### Formulează promptul
 
 ```bash
-curl -s "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$GEMINI_API_KEY" \
+curl -s "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=$GEMINI_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "contents": [{

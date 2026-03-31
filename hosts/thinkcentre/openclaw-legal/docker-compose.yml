@@ -15,7 +15,30 @@ services:
       - "18790:18790"
     init: true
     restart: unless-stopped
-    command: ["node", "dist/index.js", "gateway", "--bind", "lan", "--port", "18790"]
+    command:
+      - sh
+      - -c
+      - |
+        if ! command -v gh >/dev/null 2>&1; then
+          GH_VER=$(curl -fsSL https://api.github.com/repos/cli/cli/releases/latest | grep -o '"tag_name":"v[^"]*"' | head -1 | grep -o '[0-9][^"]*')
+          curl -fsSL "https://github.com/cli/cli/releases/download/v${GH_VER}/gh_${GH_VER}_linux_amd64.tar.gz" | tar xz -C /tmp
+          cp /tmp/gh_*/bin/gh /usr/local/bin/
+          rm -rf /tmp/gh_*
+        fi
+        if ! command -v jq >/dev/null 2>&1; then
+          apt-get update -qq && apt-get install -y -qq jq >/dev/null 2>&1
+        fi
+        echo "$$GITHUB_TOKEN" | gh auth login --with-token
+        gh auth setup-git
+        git config --global user.name "legal-assistant"
+        git config --global user.email "legal-assistant@openclaw.local"
+        if [ ! -d /home/node/dosar-maghieru/.git ]; then
+          git clone https://x-access-token:$$GITHUB_TOKEN@github.com/scriptogre/dosar-maghieru.git /home/node/dosar-maghieru
+        fi
+        git -C /home/node/dosar-maghieru remote set-url origin https://x-access-token:$$GITHUB_TOKEN@github.com/scriptogre/dosar-maghieru.git
+        git -C /home/node/dosar-maghieru pull --ff-only 2>/dev/null || true
+        cp /home/node/dosar-maghieru/CLAUDE.md /home/node/.openclaw/workspace/BOOT.md 2>/dev/null || true
+        exec node dist/index.js gateway --bind lan --port 18790
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:18790/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s

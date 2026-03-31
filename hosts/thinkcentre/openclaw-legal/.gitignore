@@ -1,0 +1,16 @@
+# Runtime state
+config/agents/
+config/canvas/
+config/credentials/
+config/identity/
+config/logs/
+config/media/
+config/telegram/
+config/update-check.json
+config/openclaw.json.bak*
+workspace/.openclaw/
+workspace/BOOT.md
+workspace/TOOLS.md
+
+# Legal documents (too large for git, synced separately)
+workspace/*.pdf

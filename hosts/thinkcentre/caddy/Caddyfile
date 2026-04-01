@@ -68,6 +68,17 @@ tanulchristian.dev, www.tanulchristian.dev {
     redir https://christiantanul.com{uri}
 }
 
+dosar.christiantanul.com {
+    import cf-tls
+    basic_auth {
+        adina $2a$14$uqLwUhv2Rz2hNqS6tVzEg.oY3s0Mte.iP8gAcdkhivilbDlC.Swt2
+    }
+    root * /srv/dosar
+    try_files {path} /index.html
+    file_server
+    encode gzip
+}
+
 bad-apple.christiantanul.com {
     import cf-tls
     reverse_proxy bad-apple-fastapi-1:8000

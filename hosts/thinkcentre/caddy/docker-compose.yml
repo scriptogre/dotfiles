@@ -2,7 +2,7 @@ services:
   caddy:
     build: .
     container_name: caddy
-    command: caddy run --config /etc/caddy/Caddyfile --adapter caddyfile --watch
+    command: caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
     environment:
       - CLOUDFLARE_API_TOKEN
     ports:
@@ -17,6 +17,7 @@ services:
       - website_dist:/srv/website:ro
       - game_web:/srv/game:ro
       - /tmp/razvanaga:/srv/razvanaga:ro
+      - /home/chris/Projects/dosar-maghieru:/srv/dosar:ro
     restart: always
 
 volumes:

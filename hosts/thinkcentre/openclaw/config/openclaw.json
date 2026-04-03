@@ -83,8 +83,7 @@
   "gateway": {
     "mode": "local",
     "auth": {
-      "mode": "token",
-      "token": "ec667d271b2b0bad21ecd47677c455b036df9a8c034d3e45"
+      "mode": "token"
     },
     "controlUi": {
       "dangerouslyAllowHostHeaderOriginFallback": true
@@ -97,8 +96,7 @@
   "tools": {
     "exec": {
       "security": "allowlist",
-      "ask": "always",
-      "askFallback": "deny"
+      "ask": "always"
     },
     "media": {
       "audio": {

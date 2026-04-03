@@ -1,4 +1,8 @@
 {
+  "meta": {
+    "lastTouchedVersion": "2026.3.13",
+    "lastTouchedAt": "2026-04-03T20:17:44.420Z"
+  },
   "agents": {
     "defaults": {
       "model": {
@@ -33,6 +37,26 @@
       }
     ]
   },
+  "tools": {
+    "media": {
+      "audio": {
+        "enabled": true,
+        "models": [
+          {
+            "provider": "groq",
+            "model": "whisper-large-v3-turbo"
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini-transcribe"
+          }
+        ]
+      }
+    },
+    "exec": {
+      "security": "deny"
+    }
+  },
   "bindings": [
     {
       "agentId": "assistant",
@@ -41,6 +65,16 @@
       }
     }
   ],
+  "messages": {
+    "tts": {
+      "auto": "inbound",
+      "provider": "openai",
+      "openai": {
+        "model": "gpt-4o-mini-tts",
+        "voice": "cedar"
+      }
+    }
+  },
   "commands": {
     "native": "auto",
     "nativeSkills": "auto",
@@ -72,57 +106,17 @@
       "enabled": true,
       "dmPolicy": "pairing",
       "groupPolicy": "allowlist",
-      "streaming": "partial",
-      "execApprovals": {
-        "enabled": true,
-        "approvers": ["1351597714"],
-        "target": "dm"
-      }
+      "streaming": "partial"
     }
   },
   "gateway": {
     "mode": "local",
+    "controlUi": {
+      "dangerouslyAllowHostHeaderOriginFallback": true
+    },
     "auth": {
       "mode": "token",
       "token": "1171028eb2749b875a34afb7d92cf9cd6d24e87677da23b203fbf4d3b45d695f"
-    },
-    "controlUi": {
-      "dangerouslyAllowHostHeaderOriginFallback": true
-    }
-  },
-  "meta": {
-    "lastTouchedVersion": "2026.3.13",
-    "lastTouchedAt": "2026-03-20T10:31:23.660Z"
-  },
-  "tools": {
-    "exec": {
-      "security": "allowlist",
-      "ask": "always"
-    },
-    "media": {
-      "audio": {
-        "enabled": true,
-        "models": [
-          {
-            "provider": "groq",
-            "model": "whisper-large-v3-turbo"
-          },
-          {
-            "provider": "openai",
-            "model": "gpt-4o-mini-transcribe"
-          }
-        ]
-      }
-    }
-  },
-  "messages": {
-    "tts": {
-      "auto": "inbound",
-      "provider": "openai",
-      "openai": {
-        "model": "gpt-4o-mini-tts",
-        "voice": "cedar"
-      }
     }
   }
 }

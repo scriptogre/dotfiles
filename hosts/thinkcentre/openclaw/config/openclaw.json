@@ -95,6 +95,11 @@
     "lastTouchedAt": "2026-03-20T10:31:23.660Z"
   },
   "tools": {
+    "exec": {
+      "security": "allowlist",
+      "ask": "always",
+      "askFallback": "deny"
+    },
     "media": {
       "audio": {
         "enabled": true,

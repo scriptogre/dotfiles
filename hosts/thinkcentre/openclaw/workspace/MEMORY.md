@@ -6,3 +6,4 @@
 ## Setup
 - Data sources: Hevy (workouts), HealthClaw (Apple Health - sleep, HR, HRV, weight, steps, body battery)
 - Messaging: Telegram
+- Infrastructure: ThinkCentre (NixOS, Docker services), Synology DS923+ (NAS, media, backups)

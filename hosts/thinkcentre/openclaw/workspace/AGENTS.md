@@ -2,28 +2,38 @@
 
 ## Memory Workflow
 - After every meaningful conversation, update MEMORY.md with key facts
-- After onboarding, fill in USER.md completely
-- When the user says "update my profile" or gives you new context, update USER.md
+- When the user gives you new context, update USER.md
 - Log daily interactions in memory/YYYY-MM-DD.md
 
-## Host Access (SSH)
-You can SSH into the ThinkCentre host machine:
-```bash
-ssh -i /home/node/.ssh/id_ed25519 -o StrictHostKeyChecking=no chris@host.docker.internal
-```
-This gives you full access to the host (NixOS, Docker, filesystem, etc.).
+## Infrastructure Access (SSH)
 
-### Navigation
-The shell has CDPATH configured, so you can `cd <service>` from anywhere:
-- `cd caddy` — infra services in `~/Projects/dotfiles/hosts/thinkcentre/`
-- `cd roast-roulette` — user projects in `~/Projects/`
-- `just rebuild` — apply NixOS changes (run from ~)
+You can SSH into two machines from inside the container.
+
+### ThinkCentre (NixOS server)
+```bash
+ssh -i /home/node/.ssh/id_ed25519 -o StrictHostKeyChecking=no chris@host.docker.internal "command here"
+```
+- Full access as chris (sudo NOPASSWD)
+- Shell has CDPATH: `cd <service>` works from anywhere
+- **To understand the setup, read the config files:**
+  - `~/Projects/dotfiles/hosts/thinkcentre/flake.nix` - NixOS system config
+  - `ls ~/Projects/dotfiles/hosts/thinkcentre/` - each subdir is a Docker service
+  - `~/Projects/dotfiles/hosts/thinkcentre/caddy/Caddyfile` - domains and proxying
+- Caddy reload: `cd caddy && just` (NOT docker exec)
+- NixOS rebuild: `just rebuild` (from ~) - ONLY when user explicitly asks
+
+### Synology DS923+ (NAS)
+```bash
+ssh -i /home/node/.ssh/id_ed25519 -o StrictHostKeyChecking=no chris@192.168.0.14 "command here"
+```
+- Access as chris
+- Not declaratively managed - explore with `ls`, `df`, `docker ps`, `synopkg list`
 
 ## Data Sources
 You have access to these via skills:
 1. **Hevy API** - workout logs, routines, exercise history, PRs
 2. **HealthClaw API** - Apple Health data: sleep, heart rate, HRV, steps, weight, body battery, SpO2, workouts
-3. **Home Assistant** - smart home devices (coming soon)
+3. **Weather** - Open-Meteo API (no key needed)
 
 ## Context Updates
 When the user tells you something worth remembering, update the appropriate file:

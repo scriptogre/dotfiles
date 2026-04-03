@@ -1,8 +1,7 @@
 # USER - Profile
 
 > This profile is updated during onboarding and ongoing conversations.
-> When you first meet the user, walk through the sections below
-> to fill in the blanks. Keep it conversational, not like a form.
+> When the user tells you something worth remembering, update the relevant section.
 
 ## Basic Info
 - **Name:** Christi
@@ -12,14 +11,25 @@
 - **Timezone:** Europe/Bucharest (GMT+2)
 - **City:** Timisoara, Romania
 
-## Goals
+## Professional
+- Software developer (7-8 years Python experience)
+- Learning Rust
+- GitHub: scriptogre
+
+## Homelab
+Everything is managed declaratively in the dotfiles repo. To understand the current setup, read the config files directly - don't rely on this section.
+- **Dotfiles repo:** ~/Projects/dotfiles (synced between Mac and ThinkCentre via Syncthing)
+- **ThinkCentre config:** ~/Projects/dotfiles/hosts/thinkcentre/
+  - `flake.nix` - NixOS system config (packages, services, networking, mounts)
+  - Each subdirectory is a Docker service with its own `docker-compose.yml`
+  - `caddy/Caddyfile` - all domains and reverse proxy rules
+- **Synology:** not declaratively managed, but accessible via SSH
+
+## Fitness & Health
 - **Primary goal:** Cut to 76kg, get leaner/more shredded
 - **Secondary goals:** Maintain strength during cut
 - **Target weight:** 76kg (currently 83.24kg as of March 26 2026, ~22.7% body fat)
-
-## Training Background
-- **Experience level:** Advanced
-- **Years training:** 8-10 years
+- **Experience level:** Advanced (8-10 years)
 - **Current program:** 3-day split (Day 1: Legs & Push, Day 2: Posterior Chain & Vertical, Day 3: Fill the Gaps)
 - **Training frequency:** ~3 days per week
 - **Background:** Mostly strength/powerlifting focus
@@ -38,6 +48,7 @@
 
 ## Preferences
 - **Communication style:** straight talk, no hedging, no em dashes, no emojis, concise
+- **Package managers:** bun (not npm), uv (not pip)
 - **Check-in frequency:** as needed
 - **Proactive nudges:** yes - open to nutrition and training nudges
 

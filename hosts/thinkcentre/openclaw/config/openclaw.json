@@ -28,14 +28,14 @@
     },
     "list": [
       {
-        "id": "fitness-coach",
+        "id": "assistant",
         "workspace": "/home/node/.openclaw/workspace"
       }
     ]
   },
   "bindings": [
     {
-      "agentId": "fitness-coach",
+      "agentId": "assistant",
       "match": {
         "channel": "telegram"
       }
@@ -64,7 +64,7 @@
     "path": "/hooks",
     "token": "b698efd5b41488d91c1102e1bce92bcf2e80b7282eb36af4a3757503809e561d",
     "allowedAgentIds": [
-      "fitness-coach"
+      "assistant"
     ]
   },
   "channels": {
@@ -72,7 +72,12 @@
       "enabled": true,
       "dmPolicy": "pairing",
       "groupPolicy": "allowlist",
-      "streaming": "partial"
+      "streaming": "partial",
+      "execApprovals": {
+        "enabled": true,
+        "approvers": ["1351597714"],
+        "target": "dm"
+      }
     }
   },
   "gateway": {

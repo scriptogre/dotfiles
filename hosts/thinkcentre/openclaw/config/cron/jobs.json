@@ -14,7 +14,7 @@
     "delivery": {
       "mode": "none"
     },
-    "agentId": "fitness-coach"
+    "agentId": "assistant"
   },
   {
     "name": "hevy-workout-check",
@@ -32,7 +32,7 @@
       "mode": "announce",
       "channel": "telegram"
     },
-    "agentId": "fitness-coach"
+    "agentId": "assistant"
   },
   {
     "name": "morning-checkin",
@@ -50,7 +50,7 @@
       "mode": "announce",
       "channel": "telegram"
     },
-    "agentId": "fitness-coach"
+    "agentId": "assistant"
   },
   {
     "name": "inactivity-nudge",
@@ -68,7 +68,7 @@
       "mode": "announce",
       "channel": "telegram"
     },
-    "agentId": "fitness-coach"
+    "agentId": "assistant"
   },
   {
     "name": "weekly-review",
@@ -86,6 +86,6 @@
       "mode": "announce",
       "channel": "telegram"
     },
-    "agentId": "fitness-coach"
+    "agentId": "assistant"
   }
 ]

@@ -83,7 +83,8 @@
   "gateway": {
     "mode": "local",
     "auth": {
-      "mode": "token"
+      "mode": "token",
+      "token": "1171028eb2749b875a34afb7d92cf9cd6d24e87677da23b203fbf4d3b45d695f"
     },
     "controlUi": {
       "dangerouslyAllowHostHeaderOriginFallback": true

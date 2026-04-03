@@ -1,7 +1,13 @@
 {
   "meta": {
     "lastTouchedVersion": "2026.3.13",
-    "lastTouchedAt": "2026-04-03T20:17:44.420Z"
+    "lastTouchedAt": "2026-04-03T20:28:05.727Z"
+  },
+  "wizard": {
+    "lastRunAt": "2026-04-03T20:28:05.718Z",
+    "lastRunVersion": "2026.3.13",
+    "lastRunCommand": "doctor",
+    "lastRunMode": "local"
   },
   "agents": {
     "defaults": {
@@ -54,7 +60,13 @@
       }
     },
     "exec": {
-      "security": "deny"
+      "security": "allowlist",
+      "safeBins": [
+        "curl"
+      ],
+      "safeBinProfiles": {
+        "curl": {}
+      }
     }
   },
   "bindings": [

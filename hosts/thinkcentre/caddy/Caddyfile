@@ -120,6 +120,12 @@ adguard.christiantanul.com {
     reverse_proxy adguard:80
 }
 
+adguard-2.christiantanul.com {
+    import cf-tls
+    import lan-only
+    reverse_proxy 100.114.162.56:8080
+}
+
 syncthing.christiantanul.com {
     import cf-tls
     import lan-only
@@ -148,6 +154,12 @@ thinkcentre.christiantanul.com {
     import cf-tls
     import lan-only
     reverse_proxy 192.168.0.12:9090
+}
+
+obsidian.christiantanul.com {
+    import cf-tls
+    import lan-only
+    reverse_proxy obsidian-couchdb:5984
 }
 
 plex.christiantanul.com {
@@ -258,7 +270,7 @@ gitea.christiantanul.com {
 
 dsm-2.christiantanul.com {
     import cf-tls
-    reverse_proxy 192.168.68.114:5000
+    reverse_proxy 100.114.162.56:5000
 }
 
 # - - - - - - - - - - - - -

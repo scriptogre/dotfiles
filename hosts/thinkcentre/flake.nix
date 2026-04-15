@@ -25,6 +25,9 @@
             imports = [ ../../common/home.nix ];
             home.username = "chris";
             home.homeDirectory = "/home/chris";
+            # Disable home-manager Syncthing — the system-level service handles
+            # it with guiAddress=0.0.0.0:8384 (needed for Caddy reverse proxy).
+            services.syncthing.enable = lib.mkForce false;
             dconf.settings = {
               "org/gnome/desktop/session" = {
                 idle-delay = lib.hm.gvariant.mkUint32 0;

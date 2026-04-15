@@ -19,8 +19,8 @@ alerting:
     to: "homelab@christiantanul.com"
     default-alert:
       enabled: true
-      failure-threshold: 2
-      success-threshold: 2
+      failure-threshold: 5
+      success-threshold: 3
       send-on-resolved: true
 
 storage:
@@ -397,6 +397,7 @@ endpoints:
     alerts:
       - type: email
         description: "Synology DS923+ NAS is not responding to ping. It may have shut down (check email for thermal alerts) or lost network."
+        enabled: false
 
   - name: "DSM"
     group: "Synology"
@@ -409,6 +410,7 @@ endpoints:
     alerts:
       - type: email
         description: "Synology DSM web interface is down."
+        enabled: false
 
   - name: "Sonarr"
     group: "Synology"
@@ -421,6 +423,7 @@ endpoints:
     alerts:
       - type: email
         description: "Sonarr (TV show manager) is down on Synology."
+        enabled: false
 
   - name: "Radarr"
     group: "Synology"
@@ -433,6 +436,7 @@ endpoints:
     alerts:
       - type: email
         description: "Radarr (movie manager) is down on Synology."
+        enabled: false
 
   - name: "Jellyfin"
     group: "Synology"
@@ -445,6 +449,7 @@ endpoints:
     alerts:
       - type: email
         description: "Jellyfin media server is down on Synology."
+        enabled: false
 
   - name: "qBittorrent"
     group: "Synology"
@@ -457,6 +462,7 @@ endpoints:
     alerts:
       - type: email
         description: "qBittorrent is down on Synology."
+        enabled: false
 
   - name: "Wakapi"
     group: "Synology"
@@ -469,6 +475,7 @@ endpoints:
     alerts:
       - type: email
         description: "Wakapi coding time tracker is down on Synology."
+        enabled: false
 
   - name: "Downloads"
     group: "Synology"
@@ -481,6 +488,7 @@ endpoints:
     alerts:
       - type: email
         description: "Download manager is down on Synology."
+        enabled: false
 
   - name: "Photos"
     group: "Synology"
@@ -493,6 +501,7 @@ endpoints:
     alerts:
       - type: email
         description: "Synology Photos is down."
+        enabled: false
 
   - name: "Drive"
     group: "Synology"
@@ -505,6 +514,7 @@ endpoints:
     alerts:
       - type: email
         description: "Synology Drive is down. File sync between devices will stop."
+        enabled: false
 
   - name: "Files"
     group: "Synology"
@@ -517,6 +527,7 @@ endpoints:
     alerts:
       - type: email
         description: "Synology File Station is down."
+        enabled: false
 
   - name: "Calendar"
     group: "Synology"
@@ -529,6 +540,7 @@ endpoints:
     alerts:
       - type: email
         description: "Synology Calendar (CalDAV) is down. Calendar sync will stop."
+        enabled: false
 
   - name: "Contacts"
     group: "Synology"
@@ -541,6 +553,7 @@ endpoints:
     alerts:
       - type: email
         description: "Synology Contacts (CardDAV) is down. Contact sync will stop."
+        enabled: false
 
   - name: "Mail"
     group: "Synology"
@@ -553,6 +566,7 @@ endpoints:
     alerts:
       - type: email
         description: "Synology MailPlus is down."
+        enabled: false
 
   - name: "Surveillance"
     group: "Synology"
@@ -565,6 +579,7 @@ endpoints:
     alerts:
       - type: email
         description: "Synology Surveillance Station is down. Camera recording and monitoring stopped."
+        enabled: false
 
   - name: "VMs"
     group: "Synology"
@@ -577,6 +592,7 @@ endpoints:
     alerts:
       - type: email
         description: "Synology Virtual Machine Manager is down."
+        enabled: false
 
   # ─── Synology-2 (remote site, via Tailscale) ──────────────
 

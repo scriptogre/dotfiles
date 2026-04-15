@@ -1,0 +1,544 @@
+alerting:
+  email:
+    from: "status@christiantanul.com"
+    host: "smtp.resend.com"
+    port: 587
+    username: "resend"
+    password: "${RESEND_API_KEY}"
+    to: "homelab@christiantanul.com"
+    default-alert:
+      enabled: true
+      failure-threshold: 2
+      success-threshold: 2
+      send-on-resolved: true
+
+storage:
+  type: sqlite
+  path: /data/gatus.db
+
+ui:
+  title: "Homelab Status"
+  header: "Homelab Status"
+
+endpoints:
+  - name: "DNS (AdGuard 1)"
+    group: "Infrastructure"
+    url: "192.168.0.12"
+    interval: 60s
+    dns:
+      query-name: "christiantanul.com"
+      query-type: "A"
+    conditions:
+      - "[DNS_RCODE] == NOERROR"
+      - "[BODY] == 192.168.0.12"
+    alerts:
+      - type: email
+
+  - name: "DNS (AdGuard 2)"
+    group: "Infrastructure"
+    url: "100.114.162.56"
+    interval: 60s
+    dns:
+      query-name: "christiantanul.com"
+      query-type: "A"
+    conditions:
+      - "[DNS_RCODE] == NOERROR"
+      - "[BODY] == 192.168.0.12"
+    alerts:
+      - type: email
+
+  - name: "Internet"
+    group: "Infrastructure"
+    url: "icmp://1.1.1.1"
+    interval: 60s
+    conditions:
+      - "[CONNECTED] == true"
+    alerts:
+      - type: email
+
+  - name: "Tailscale → Synology-2"
+    group: "Infrastructure"
+    url: "icmp://100.114.162.56"
+    interval: 60s
+    conditions:
+      - "[CONNECTED] == true"
+    alerts:
+      - type: email
+
+  - name: "Tailscale → Proxmox"
+    group: "Infrastructure"
+    url: "icmp://100.122.66.112"
+    interval: 60s
+    conditions:
+      - "[CONNECTED] == true"
+    alerts:
+      - type: email
+
+  - name: "Disk Space"
+    group: "ThinkCentre Health"
+    url: "http://gatus-helper:8080/cgi-bin/disk.sh"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: email
+
+  - name: "Docker Containers"
+    group: "ThinkCentre Health"
+    url: "http://gatus-helper:8080/cgi-bin/docker.sh"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: email
+
+  - name: "SMB Mounts"
+    group: "ThinkCentre Health"
+    url: "http://gatus-helper:8080/cgi-bin/mounts.sh"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: email
+
+  - name: "Syncthing Sync"
+    group: "ThinkCentre Health"
+    url: "http://gatus-helper:8080/cgi-bin/syncthing.sh"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: email
+
+  - name: "AdGuard"
+    group: "ThinkCentre Services"
+    url: "http://adguard:80"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: email
+
+  - name: "AdGuard Sync"
+    group: "ThinkCentre Services"
+    url: "http://adguard-sync:8080"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: email
+
+  - name: "Home Assistant"
+    group: "ThinkCentre Services"
+    url: "http://home-assistant:8123"
+    interval: 5m
+    conditions:
+      - "[STATUS] == any(200, 401)"
+    alerts:
+      - type: email
+
+  - name: "Vaultwarden"
+    group: "ThinkCentre Services"
+    url: "http://vaultwarden:80"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: email
+
+  - name: "Umami"
+    group: "ThinkCentre Services"
+    url: "http://umami:3000"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: email
+
+  - name: "Obsidian CouchDB"
+    group: "ThinkCentre Services"
+    url: "http://obsidian-couchdb:5984"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: email
+
+  - name: "Plex"
+    group: "ThinkCentre Services"
+    url: "http://192.168.0.12:32400/web"
+    interval: 5m
+    conditions:
+      - "[STATUS] == any(200, 301, 302)"
+    alerts:
+      - type: email
+
+  - name: "Cockpit"
+    group: "ThinkCentre Services"
+    url: "http://192.168.0.12:9090"
+    interval: 5m
+    conditions:
+      - "[STATUS] == any(200, 301, 302)"
+    alerts:
+      - type: email
+
+  - name: "Healthclaw"
+    group: "ThinkCentre Services"
+    url: "http://healthclaw:8099"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: email
+
+  - name: "SpacetimeDB"
+    group: "ThinkCentre Services"
+    url: "http://spacetimedb:3000"
+    interval: 5m
+    conditions:
+      - "[STATUS] == any(200, 301, 302, 404)"
+    alerts:
+      - type: email
+
+  - name: "OpenClaw"
+    group: "ThinkCentre Services"
+    url: "http://openclaw:18789"
+    interval: 5m
+    conditions:
+      - "[STATUS] == any(200, 301, 302, 404)"
+    alerts:
+      - type: email
+
+  - name: "OpenClaw Legal"
+    group: "ThinkCentre Services"
+    url: "http://openclaw-legal:18790"
+    interval: 5m
+    conditions:
+      - "[STATUS] == any(200, 301, 302, 404)"
+    alerts:
+      - type: email
+
+  - name: "christiantanul.com"
+    group: "Public Sites"
+    url: "https://christiantanul.com"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: email
+
+  - name: "intreabalegea.ro"
+    group: "Public Sites"
+    url: "https://intreabalegea.ro"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: email
+
+  - name: "staging.intreabalegea.ro"
+    group: "Public Sites"
+    url: "https://staging.intreabalegea.ro"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: email
+
+  - name: "Roast Roulette"
+    group: "Public Sites"
+    url: "https://roastroulette.christiantanul.com"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: email
+
+  - name: "Analytics (Umami)"
+    group: "Public Sites"
+    url: "https://analytics.christiantanul.com"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: email
+
+  - name: "Analytics (Plausible)"
+    group: "Public Sites"
+    url: "https://analytics.intreabalegea.ro"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: email
+
+  - name: "Bad Apple"
+    group: "Public Sites"
+    url: "https://bad-apple.christiantanul.com"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: email
+
+  - name: "Clinical Trials Scout"
+    group: "Public Sites"
+    url: "https://clinical-trials-scout.alexandrutanul.com"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: email
+
+  - name: "game.razvanaga.com"
+    group: "Public Sites"
+    url: "https://game.razvanaga.com"
+    interval: 5m
+    conditions:
+      - "[STATUS] == any(200, 301, 302)"
+    alerts:
+      - type: email
+
+  - name: "Game (Hyperspace)"
+    group: "Public Sites"
+    url: "https://game.christiantanul.com"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: email
+
+  - name: "Gitea"
+    group: "Public Sites"
+    url: "https://gitea.christiantanul.com"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: email
+
+  - name: "Dosar"
+    group: "Public Sites"
+    url: "https://dosar.christiantanul.com"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 401"
+    alerts:
+      - type: email
+
+  - name: "Synology Ping"
+    group: "Synology"
+    url: "icmp://192.168.0.14"
+    interval: 5m
+    conditions:
+      - "[CONNECTED] == true"
+    alerts:
+      - type: email
+
+  - name: "DSM"
+    group: "Synology"
+    url: "http://192.168.0.14:5000"
+    interval: 5m
+    client:
+      timeout: 10s
+    conditions:
+      - "[STATUS] == any(200, 301, 302)"
+    alerts:
+      - type: email
+
+  - name: "Sonarr"
+    group: "Synology"
+    url: "http://192.168.0.14:8989"
+    interval: 5m
+    client:
+      timeout: 10s
+    conditions:
+      - "[STATUS] == any(200, 301, 302)"
+    alerts:
+      - type: email
+
+  - name: "Radarr"
+    group: "Synology"
+    url: "http://192.168.0.14:7878"
+    interval: 5m
+    client:
+      timeout: 10s
+    conditions:
+      - "[STATUS] == any(200, 301, 302)"
+    alerts:
+      - type: email
+
+  - name: "Jellyfin"
+    group: "Synology"
+    url: "http://192.168.0.14:8096"
+    interval: 5m
+    client:
+      timeout: 10s
+    conditions:
+      - "[STATUS] == any(200, 301, 302)"
+    alerts:
+      - type: email
+
+  - name: "qBittorrent"
+    group: "Synology"
+    url: "http://192.168.0.14:9865"
+    interval: 5m
+    client:
+      timeout: 10s
+    conditions:
+      - "[STATUS] == any(200, 301, 302)"
+    alerts:
+      - type: email
+
+  - name: "Wakapi"
+    group: "Synology"
+    url: "http://192.168.0.14:3000"
+    interval: 5m
+    client:
+      timeout: 10s
+    conditions:
+      - "[STATUS] == any(200, 301, 302)"
+    alerts:
+      - type: email
+
+  - name: "Downloads"
+    group: "Synology"
+    url: "http://192.168.0.14:1337"
+    interval: 5m
+    client:
+      timeout: 10s
+    conditions:
+      - "[STATUS] == any(200, 301, 302)"
+    alerts:
+      - type: email
+
+  - name: "Photos"
+    group: "Synology"
+    url: "http://192.168.0.14:5080"
+    interval: 5m
+    client:
+      timeout: 10s
+    conditions:
+      - "[STATUS] == any(200, 301, 302)"
+    alerts:
+      - type: email
+
+  - name: "Drive"
+    group: "Synology"
+    url: "http://192.168.0.14:10002"
+    interval: 5m
+    client:
+      timeout: 10s
+    conditions:
+      - "[STATUS] == any(200, 301, 302)"
+    alerts:
+      - type: email
+
+  - name: "Files"
+    group: "Synology"
+    url: "http://192.168.0.14:7000"
+    interval: 5m
+    client:
+      timeout: 10s
+    conditions:
+      - "[STATUS] == any(200, 301, 302)"
+    alerts:
+      - type: email
+
+  - name: "Calendar"
+    group: "Synology"
+    url: "http://192.168.0.14:20002"
+    interval: 5m
+    client:
+      timeout: 10s
+    conditions:
+      - "[STATUS] == any(200, 301, 302)"
+    alerts:
+      - type: email
+
+  - name: "Contacts"
+    group: "Synology"
+    url: "http://192.168.0.14:25555"
+    interval: 5m
+    client:
+      timeout: 10s
+    conditions:
+      - "[STATUS] == any(200, 301, 302)"
+    alerts:
+      - type: email
+
+  - name: "Mail"
+    group: "Synology"
+    url: "http://192.168.0.14:21680"
+    interval: 5m
+    client:
+      timeout: 10s
+    conditions:
+      - "[STATUS] == any(200, 301, 302)"
+    alerts:
+      - type: email
+
+  - name: "Surveillance"
+    group: "Synology"
+    url: "http://192.168.0.14:9900"
+    interval: 5m
+    client:
+      timeout: 10s
+    conditions:
+      - "[STATUS] == any(200, 301, 302)"
+    alerts:
+      - type: email
+
+  - name: "VMs"
+    group: "Synology"
+    url: "http://192.168.0.14:14640"
+    interval: 5m
+    client:
+      timeout: 10s
+    conditions:
+      - "[STATUS] == any(200, 301, 302)"
+    alerts:
+      - type: email
+
+  - name: "Synology-2 Ping"
+    group: "Synology-2"
+    url: "icmp://100.114.162.56"
+    interval: 5m
+    conditions:
+      - "[CONNECTED] == true"
+    alerts:
+      - type: email
+
+  - name: "DSM-2"
+    group: "Synology-2"
+    url: "http://100.114.162.56:5000"
+    interval: 5m
+    client:
+      timeout: 10s
+    conditions:
+      - "[STATUS] == any(200, 301, 302)"
+    alerts:
+      - type: email
+
+  - name: "AdGuard-2"
+    group: "Synology-2"
+    url: "http://100.114.162.56:8080"
+    interval: 5m
+    client:
+      timeout: 10s
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: email
+
+  - name: "Proxmox"
+    group: "Proxmox"
+    url: "https://100.122.66.112:8006"
+    interval: 5m
+    client:
+      timeout: 10s
+      insecure: true
+    conditions:
+      - "[STATUS] == any(200, 301, 302)"
+    alerts:
+      - type: email

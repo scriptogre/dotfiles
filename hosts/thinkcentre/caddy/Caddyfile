@@ -126,6 +126,12 @@ adguard-2.christiantanul.com {
     reverse_proxy 100.114.162.56:8080
 }
 
+status.christiantanul.com {
+    import cf-tls
+    import lan-only
+    reverse_proxy gatus:8080
+}
+
 syncthing.christiantanul.com {
     import cf-tls
     import lan-only

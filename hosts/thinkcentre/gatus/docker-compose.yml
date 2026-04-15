@@ -1,0 +1,42 @@
+services:
+  gatus:
+    image: twinproduction/gatus:latest
+    container_name: gatus
+    restart: unless-stopped
+    expose:
+      - 8080
+    networks:
+      - proxy
+      - default
+    environment:
+      - RESEND_API_KEY=${RESEND_API_KEY}
+    volumes:
+      - ./config.yaml:/config/config.yaml:ro
+      - gatus_data:/data
+    cap_add:
+      - NET_RAW
+    depends_on:
+      - gatus-helper
+
+  gatus-helper:
+    build: ./helper
+    container_name: gatus-helper
+    restart: unless-stopped
+    expose:
+      - 8080
+    networks:
+      - proxy
+      - default
+    environment:
+      - SYNCTHING_API_KEY=${SYNCTHING_API_KEY}
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /:/hostfs:ro
+
+volumes:
+  gatus_data:
+
+networks:
+  proxy:
+    external: true

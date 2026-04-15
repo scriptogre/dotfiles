@@ -83,16 +83,7 @@ endpoints:
       - type: email
         description: "Cannot reach Synology-2 at remote site via Tailscale. The device may be offline or Tailscale disconnected."
 
-  - name: "Tailscale → Proxmox"
-    group: "Infra"
-    url: "icmp://100.122.66.112"
-    interval: 60s
-    conditions:
-      - "[CONNECTED] == true"
-    alerts:
-      - type: email
-        description: "Cannot reach Proxmox server via Tailscale. The server may be powered off or Tailscale disconnected."
-        enabled: false
+  # Proxmox ping removed — the HTTPS check in the Proxmox section covers reachability.
 
   # ─── ThinkCentre Health ────────────────────────────────────
   # System-level checks via gatus-helper CGI scripts.
@@ -108,7 +99,7 @@ endpoints:
       - type: email
         description: "Disk usage exceeded 85% on one or more mount points (/, /home, or NAS mounts). Check with 'df -h' on ThinkCentre."
 
-  - name: "Docker Containers"
+  - name: "Unhealthy Containers"
     group: "Health"
     url: "http://gatus-helper:8080/cgi-bin/docker.sh"
     interval: 5m
@@ -128,7 +119,7 @@ endpoints:
       - type: email
         description: "Synology NAS SMB mounts (/mnt/nas/*) are inaccessible. The Synology may be down or the network path broken."
 
-  - name: "Syncthing Sync"
+  - name: "Syncthing (Mac ↔ TC)"
     group: "Health"
     url: "http://gatus-helper:8080/cgi-bin/syncthing.sh"
     interval: 5m
@@ -435,17 +426,6 @@ endpoints:
       - type: email
         description: "Radarr (movie manager) is down on Synology."
 
-  - name: "Jellyfin"
-    group: "Synology"
-    url: "http://192.168.0.14:8096"
-    interval: 5m
-    client:
-      timeout: 10s
-    conditions:
-      - "[STATUS] == any(200, 301, 302)"
-    alerts:
-      - type: email
-        description: "Jellyfin media server is down on Synology."
 
   - name: "qBittorrent"
     group: "Synology"
@@ -617,8 +597,9 @@ endpoints:
 
   # ─── Proxmox (via Tailscale) ───────────────────────────────
 
-  - name: "Proxmox"
-    group: "Proxmox"
+  # Brother's PC — alerts disabled since he turns it on/off frequently.
+  - name: "Proxmox (Brother's PC)"
+    group: "Remote"
     url: "https://100.122.66.112:8006"
     interval: 5m
     client:

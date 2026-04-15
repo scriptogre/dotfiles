@@ -259,12 +259,6 @@ wakapi.christiantanul.com {
     reverse_proxy 192.168.0.14:3000
 }
 
-jellyfin.christiantanul.com {
-    import cf-tls
-    import lan-only
-    reverse_proxy 192.168.0.14:8096
-}
-
 gitea.christiantanul.com {
     import cf-tls
     reverse_proxy 192.168.0.14:8418

@@ -9,7 +9,7 @@ for mount in / /home /mnt/nas/media /mnt/nas/media_server /mnt/nas/homes; do
   if [ ! -d "$hostfs_path" ]; then
     continue
   fi
-  pct=$(df "$hostfs_path" 2>/dev/null | awk 'NR==2 {gsub(/%/,"",$5); print $5}')
+  pct=$(timeout 5 df "$hostfs_path" 2>/dev/null | awk 'NR==2 {gsub(/%/,"",$5); print $5}')
   if [ -z "$pct" ]; then
     continue
   fi

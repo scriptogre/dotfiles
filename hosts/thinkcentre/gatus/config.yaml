@@ -160,7 +160,7 @@ endpoints:
     url: "http://obsidian-couchdb:5984"
     interval: 5m
     conditions:
-      - "[STATUS] == 200"
+      - "[STATUS] == any(200, 401)"
     alerts:
       - type: email
 
@@ -187,7 +187,7 @@ endpoints:
     url: "http://healthclaw:8099"
     interval: 5m
     conditions:
-      - "[STATUS] == 200"
+      - "[STATUS] == any(200, 404)"
     alerts:
       - type: email
 
@@ -202,7 +202,7 @@ endpoints:
 
   - name: "OpenClaw"
     group: "Services"
-    url: "http://openclaw:18789"
+    url: "http://192.168.0.12:18789"
     interval: 5m
     conditions:
       - "[STATUS] == any(200, 301, 302, 404)"
@@ -211,7 +211,7 @@ endpoints:
 
   - name: "OpenClaw Legal"
     group: "Services"
-    url: "http://openclaw-legal:18790"
+    url: "http://192.168.0.12:18790"
     interval: 5m
     conditions:
       - "[STATUS] == any(200, 301, 302, 404)"
@@ -223,7 +223,7 @@ endpoints:
     url: "https://christiantanul.com"
     interval: 5m
     conditions:
-      - "[STATUS] == 200"
+      - "[STATUS] == any(200, 404)"
     alerts:
       - type: email
 

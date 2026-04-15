@@ -22,7 +22,7 @@ ui:
 
 endpoints:
   - name: "DNS (AdGuard 1)"
-    group: "Infrastructure"
+    group: "Infra"
     url: "192.168.0.12"
     interval: 60s
     dns:
@@ -35,7 +35,7 @@ endpoints:
       - type: email
 
   - name: "DNS (AdGuard 2)"
-    group: "Infrastructure"
+    group: "Infra"
     url: "100.114.162.56"
     interval: 60s
     dns:
@@ -48,7 +48,7 @@ endpoints:
       - type: email
 
   - name: "Internet"
-    group: "Infrastructure"
+    group: "Infra"
     url: "icmp://1.1.1.1"
     interval: 60s
     conditions:
@@ -57,7 +57,7 @@ endpoints:
       - type: email
 
   - name: "Tailscale → Synology-2"
-    group: "Infrastructure"
+    group: "Infra"
     url: "icmp://100.114.162.56"
     interval: 60s
     conditions:
@@ -66,7 +66,7 @@ endpoints:
       - type: email
 
   - name: "Tailscale → Proxmox"
-    group: "Infrastructure"
+    group: "Infra"
     url: "icmp://100.122.66.112"
     interval: 60s
     conditions:
@@ -75,7 +75,7 @@ endpoints:
       - type: email
 
   - name: "Disk Space"
-    group: "ThinkCentre Health"
+    group: "Health"
     url: "http://gatus-helper:8080/cgi-bin/disk.sh"
     interval: 5m
     conditions:
@@ -84,7 +84,7 @@ endpoints:
       - type: email
 
   - name: "Docker Containers"
-    group: "ThinkCentre Health"
+    group: "Health"
     url: "http://gatus-helper:8080/cgi-bin/docker.sh"
     interval: 5m
     conditions:
@@ -93,7 +93,7 @@ endpoints:
       - type: email
 
   - name: "SMB Mounts"
-    group: "ThinkCentre Health"
+    group: "Health"
     url: "http://gatus-helper:8080/cgi-bin/mounts.sh"
     interval: 5m
     conditions:
@@ -102,7 +102,7 @@ endpoints:
       - type: email
 
   - name: "Syncthing Sync"
-    group: "ThinkCentre Health"
+    group: "Health"
     url: "http://gatus-helper:8080/cgi-bin/syncthing.sh"
     interval: 5m
     conditions:
@@ -111,7 +111,7 @@ endpoints:
       - type: email
 
   - name: "AdGuard"
-    group: "ThinkCentre Services"
+    group: "Services"
     url: "http://adguard:80"
     interval: 5m
     conditions:
@@ -120,7 +120,7 @@ endpoints:
       - type: email
 
   - name: "AdGuard Sync"
-    group: "ThinkCentre Services"
+    group: "Services"
     url: "http://adguard-sync:8080"
     interval: 5m
     conditions:
@@ -129,7 +129,7 @@ endpoints:
       - type: email
 
   - name: "Home Assistant"
-    group: "ThinkCentre Services"
+    group: "Services"
     url: "http://home-assistant:8123"
     interval: 5m
     conditions:
@@ -138,7 +138,7 @@ endpoints:
       - type: email
 
   - name: "Vaultwarden"
-    group: "ThinkCentre Services"
+    group: "Services"
     url: "http://vaultwarden:80"
     interval: 5m
     conditions:
@@ -147,7 +147,7 @@ endpoints:
       - type: email
 
   - name: "Umami"
-    group: "ThinkCentre Services"
+    group: "Services"
     url: "http://umami:3000"
     interval: 5m
     conditions:
@@ -156,7 +156,7 @@ endpoints:
       - type: email
 
   - name: "Obsidian CouchDB"
-    group: "ThinkCentre Services"
+    group: "Services"
     url: "http://obsidian-couchdb:5984"
     interval: 5m
     conditions:
@@ -165,7 +165,7 @@ endpoints:
       - type: email
 
   - name: "Plex"
-    group: "ThinkCentre Services"
+    group: "Services"
     url: "http://192.168.0.12:32400/web"
     interval: 5m
     conditions:
@@ -174,7 +174,7 @@ endpoints:
       - type: email
 
   - name: "Cockpit"
-    group: "ThinkCentre Services"
+    group: "Services"
     url: "http://192.168.0.12:9090"
     interval: 5m
     conditions:
@@ -183,7 +183,7 @@ endpoints:
       - type: email
 
   - name: "Healthclaw"
-    group: "ThinkCentre Services"
+    group: "Services"
     url: "http://healthclaw:8099"
     interval: 5m
     conditions:
@@ -192,7 +192,7 @@ endpoints:
       - type: email
 
   - name: "SpacetimeDB"
-    group: "ThinkCentre Services"
+    group: "Services"
     url: "http://spacetimedb:3000"
     interval: 5m
     conditions:
@@ -201,7 +201,7 @@ endpoints:
       - type: email
 
   - name: "OpenClaw"
-    group: "ThinkCentre Services"
+    group: "Services"
     url: "http://openclaw:18789"
     interval: 5m
     conditions:
@@ -210,7 +210,7 @@ endpoints:
       - type: email
 
   - name: "OpenClaw Legal"
-    group: "ThinkCentre Services"
+    group: "Services"
     url: "http://openclaw-legal:18790"
     interval: 5m
     conditions:
@@ -219,7 +219,7 @@ endpoints:
       - type: email
 
   - name: "christiantanul.com"
-    group: "Public Sites"
+    group: "Public"
     url: "https://christiantanul.com"
     interval: 5m
     conditions:
@@ -228,7 +228,7 @@ endpoints:
       - type: email
 
   - name: "intreabalegea.ro"
-    group: "Public Sites"
+    group: "Public"
     url: "https://intreabalegea.ro"
     interval: 5m
     conditions:
@@ -237,7 +237,7 @@ endpoints:
       - type: email
 
   - name: "staging.intreabalegea.ro"
-    group: "Public Sites"
+    group: "Public"
     url: "https://staging.intreabalegea.ro"
     interval: 5m
     conditions:
@@ -246,7 +246,7 @@ endpoints:
       - type: email
 
   - name: "Roast Roulette"
-    group: "Public Sites"
+    group: "Public"
     url: "https://roastroulette.christiantanul.com"
     interval: 5m
     conditions:
@@ -255,7 +255,7 @@ endpoints:
       - type: email
 
   - name: "Analytics (Umami)"
-    group: "Public Sites"
+    group: "Public"
     url: "https://analytics.christiantanul.com"
     interval: 5m
     conditions:
@@ -264,7 +264,7 @@ endpoints:
       - type: email
 
   - name: "Analytics (Plausible)"
-    group: "Public Sites"
+    group: "Public"
     url: "https://analytics.intreabalegea.ro"
     interval: 5m
     conditions:
@@ -273,7 +273,7 @@ endpoints:
       - type: email
 
   - name: "Bad Apple"
-    group: "Public Sites"
+    group: "Public"
     url: "https://bad-apple.christiantanul.com"
     interval: 5m
     conditions:
@@ -282,7 +282,7 @@ endpoints:
       - type: email
 
   - name: "Clinical Trials Scout"
-    group: "Public Sites"
+    group: "Public"
     url: "https://clinical-trials-scout.alexandrutanul.com"
     interval: 5m
     conditions:
@@ -291,7 +291,7 @@ endpoints:
       - type: email
 
   - name: "game.razvanaga.com"
-    group: "Public Sites"
+    group: "Public"
     url: "https://game.razvanaga.com"
     interval: 5m
     conditions:
@@ -300,7 +300,7 @@ endpoints:
       - type: email
 
   - name: "Game (Hyperspace)"
-    group: "Public Sites"
+    group: "Public"
     url: "https://game.christiantanul.com"
     interval: 5m
     conditions:
@@ -309,7 +309,7 @@ endpoints:
       - type: email
 
   - name: "Gitea"
-    group: "Public Sites"
+    group: "Public"
     url: "https://gitea.christiantanul.com"
     interval: 5m
     conditions:
@@ -318,7 +318,7 @@ endpoints:
       - type: email
 
   - name: "Dosar"
-    group: "Public Sites"
+    group: "Public"
     url: "https://dosar.christiantanul.com"
     interval: 5m
     conditions:

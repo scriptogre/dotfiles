@@ -1,3 +1,14 @@
+# Gatus monitoring configuration for the homelab.
+# Dashboard: status.christiantanul.com (LAN/Tailscale only)
+# Alerts: email via Resend SMTP to homelab@christiantanul.com
+#
+# Endpoints are checked at two intervals:
+#   - 60s for infrastructure (DNS, connectivity) — outages here affect everything
+#   - 5m for services — individual app health checks
+#
+# The gatus-helper container (Alpine + busybox httpd) exposes system-level
+# checks as CGI scripts that return 200/503 JSON responses.
+
 alerting:
   email:
     from: "status@christiantanul.com"
@@ -21,6 +32,11 @@ ui:
   header: "Homelab Status"
 
 endpoints:
+
+  # ─── Infrastructure ────────────────────────────────────────
+  # Core network services. Checked every 60s because failures
+  # here cascade to everything else.
+
   - name: "DNS (AdGuard 1)"
     group: "Infra"
     url: "192.168.0.12"
@@ -32,6 +48,7 @@ endpoints:
       - "[DNS_RCODE] == NOERROR"
     alerts:
       - type: email
+        description: "Primary DNS (AdGuard on ThinkCentre) is not resolving queries. All local domain resolution depends on this."
 
   - name: "DNS (AdGuard 2)"
     group: "Infra"
@@ -44,6 +61,7 @@ endpoints:
       - "[DNS_RCODE] == NOERROR"
     alerts:
       - type: email
+        description: "Secondary DNS (AdGuard on Synology-2) is not resolving queries. Failover DNS for when primary is unreachable."
 
   - name: "Internet"
     group: "Infra"
@@ -53,6 +71,7 @@ endpoints:
       - "[CONNECTED] == true"
     alerts:
       - type: email
+        description: "ThinkCentre cannot reach the internet (ping to 1.1.1.1 failed). Check router, ISP, or ethernet cable."
 
   - name: "Tailscale → Synology-2"
     group: "Infra"
@@ -62,6 +81,7 @@ endpoints:
       - "[CONNECTED] == true"
     alerts:
       - type: email
+        description: "Cannot reach Synology-2 at remote site via Tailscale. The device may be offline or Tailscale disconnected."
 
   - name: "Tailscale → Proxmox"
     group: "Infra"
@@ -71,6 +91,11 @@ endpoints:
       - "[CONNECTED] == true"
     alerts:
       - type: email
+        description: "Cannot reach Proxmox server via Tailscale. The server may be powered off or Tailscale disconnected."
+
+  # ─── ThinkCentre Health ────────────────────────────────────
+  # System-level checks via gatus-helper CGI scripts.
+  # These detect problems that individual service checks won't catch.
 
   - name: "Disk Space"
     group: "Health"
@@ -80,6 +105,7 @@ endpoints:
       - "[STATUS] == 200"
     alerts:
       - type: email
+        description: "Disk usage exceeded 85% on one or more mount points (/, /home, or NAS mounts). Check with 'df -h' on ThinkCentre."
 
   - name: "Docker Containers"
     group: "Health"
@@ -89,6 +115,7 @@ endpoints:
       - "[STATUS] == 200"
     alerts:
       - type: email
+        description: "One or more Docker containers are stopped or unhealthy. Run 'docker ps -a' on ThinkCentre to see which."
 
   - name: "SMB Mounts"
     group: "Health"
@@ -98,6 +125,7 @@ endpoints:
       - "[STATUS] == 200"
     alerts:
       - type: email
+        description: "Synology NAS SMB mounts (/mnt/nas/*) are inaccessible. The Synology may be down or the network path broken."
 
   - name: "Syncthing Sync"
     group: "Health"
@@ -107,6 +135,11 @@ endpoints:
       - "[STATUS] == 200"
     alerts:
       - type: email
+        description: "Syncthing Projects folder has sync errors. Changes between Mac and ThinkCentre may not be propagating. Check syncthing.christiantanul.com."
+
+  # ─── ThinkCentre Services ──────────────────────────────────
+  # Docker services running on the ThinkCentre.
+  # Checked via internal Docker network or host IP.
 
   - name: "AdGuard"
     group: "Services"
@@ -116,6 +149,7 @@ endpoints:
       - "[STATUS] == 200"
     alerts:
       - type: email
+        description: "AdGuard Home DNS server web UI is down. DNS may still work but management is inaccessible."
 
   - name: "AdGuard Sync"
     group: "Services"
@@ -125,7 +159,9 @@ endpoints:
       - "[STATUS] == 200"
     alerts:
       - type: email
+        description: "AdGuard sync service is down. DNS rewrites will no longer propagate from AdGuard 1 to AdGuard 2."
 
+  # Home Assistant returns 401 when not logged in — that's fine, it means the service is up.
   - name: "Home Assistant"
     group: "Services"
     url: "http://home-assistant:8123"
@@ -134,6 +170,7 @@ endpoints:
       - "[STATUS] == any(200, 401)"
     alerts:
       - type: email
+        description: "Home Assistant is not responding. Smart home automations, sensors, and integrations are offline."
 
   - name: "Vaultwarden"
     group: "Services"
@@ -143,6 +180,7 @@ endpoints:
       - "[STATUS] == 200"
     alerts:
       - type: email
+        description: "Vaultwarden password manager is down. Bitwarden clients won't be able to sync."
 
   - name: "Umami"
     group: "Services"
@@ -152,7 +190,9 @@ endpoints:
       - "[STATUS] == 200"
     alerts:
       - type: email
+        description: "Umami web analytics is down. Analytics tracking for sites will stop collecting data."
 
+  # CouchDB returns 401 without auth — means the service is running.
   - name: "Obsidian CouchDB"
     group: "Services"
     url: "http://obsidian-couchdb:5984"
@@ -161,6 +201,7 @@ endpoints:
       - "[STATUS] == any(200, 401)"
     alerts:
       - type: email
+        description: "Obsidian LiveSync CouchDB is down. Obsidian notes will stop syncing between devices."
 
   - name: "Plex"
     group: "Services"
@@ -170,6 +211,7 @@ endpoints:
       - "[STATUS] == any(200, 301, 302)"
     alerts:
       - type: email
+        description: "Plex media server is not responding."
 
   - name: "Cockpit"
     group: "Services"
@@ -179,7 +221,9 @@ endpoints:
       - "[STATUS] == any(200, 301, 302)"
     alerts:
       - type: email
+        description: "Cockpit system management UI is down. Web-based terminal and system monitoring unavailable."
 
+  # Healthclaw returns 404 on root (no index route) — any HTTP response means it's alive.
   - name: "Healthclaw"
     group: "Services"
     url: "http://healthclaw:8099"
@@ -188,7 +232,9 @@ endpoints:
       - "[STATUS] == any(200, 404)"
     alerts:
       - type: email
+        description: "Healthclaw health data API is down."
 
+  # SpacetimeDB may return various codes depending on state — any response means alive.
   - name: "SpacetimeDB"
     group: "Services"
     url: "http://spacetimedb:3000"
@@ -197,7 +243,9 @@ endpoints:
       - "[STATUS] == any(200, 301, 302, 404)"
     alerts:
       - type: email
+        description: "SpacetimeDB game server is not responding."
 
+  # OpenClaw containers are on their own Docker network, so we reach them via host IP.
   - name: "OpenClaw"
     group: "Services"
     url: "http://192.168.0.12:18789"
@@ -206,6 +254,7 @@ endpoints:
       - "[STATUS] == any(200, 301, 302, 404)"
     alerts:
       - type: email
+        description: "OpenClaw AI assistant is not responding."
 
   - name: "OpenClaw Legal"
     group: "Services"
@@ -215,7 +264,13 @@ endpoints:
       - "[STATUS] == any(200, 301, 302, 404)"
     alerts:
       - type: email
+        description: "OpenClaw Legal assistant is not responding."
 
+  # ─── Public Sites ──────────────────────────────────────────
+  # External-facing websites behind Caddy. Checked via HTTPS
+  # through Cloudflare to verify the full chain works.
+
+  # Static site — currently empty (404), but checking the full HTTPS chain.
   - name: "christiantanul.com"
     group: "Public"
     url: "https://christiantanul.com"
@@ -224,6 +279,7 @@ endpoints:
       - "[STATUS] == any(200, 404)"
     alerts:
       - type: email
+        description: "christiantanul.com is unreachable. Caddy or Cloudflare may be down."
 
   - name: "intreabalegea.ro"
     group: "Public"
@@ -233,6 +289,7 @@ endpoints:
       - "[STATUS] == 200"
     alerts:
       - type: email
+        description: "intreabalegea.ro (Django app) is down."
 
   - name: "staging.intreabalegea.ro"
     group: "Public"
@@ -242,6 +299,7 @@ endpoints:
       - "[STATUS] == 200"
     alerts:
       - type: email
+        description: "intreabalegea.ro staging environment is down."
 
   - name: "Roast Roulette"
     group: "Public"
@@ -251,6 +309,7 @@ endpoints:
       - "[STATUS] == 200"
     alerts:
       - type: email
+        description: "Roast Roulette app is down."
 
   - name: "Analytics (Umami)"
     group: "Public"
@@ -260,6 +319,7 @@ endpoints:
       - "[STATUS] == 200"
     alerts:
       - type: email
+        description: "Umami analytics dashboard is unreachable via its public URL."
 
   - name: "Bad Apple"
     group: "Public"
@@ -269,6 +329,7 @@ endpoints:
       - "[STATUS] == 200"
     alerts:
       - type: email
+        description: "Bad Apple app is down."
 
   - name: "Clinical Trials Scout"
     group: "Public"
@@ -278,6 +339,7 @@ endpoints:
       - "[STATUS] == 200"
     alerts:
       - type: email
+        description: "Clinical Trials Scout (Alexandru's app) is down."
 
   - name: "game.razvanaga.com"
     group: "Public"
@@ -287,7 +349,9 @@ endpoints:
       - "[STATUS] == any(200, 301, 302)"
     alerts:
       - type: email
+        description: "Razvan's game site is down."
 
+  # Static game files — may return 404 if no index, any response means Caddy is serving.
   - name: "Game (Hyperspace)"
     group: "Public"
     url: "https://game.christiantanul.com"
@@ -296,7 +360,9 @@ endpoints:
       - "[STATUS] == any(200, 404)"
     alerts:
       - type: email
+        description: "Hyperspace game site is unreachable."
 
+  # Gitea runs on the Synology — will fail when Synology is down.
   - name: "Gitea"
     group: "Public"
     url: "https://gitea.christiantanul.com"
@@ -305,7 +371,9 @@ endpoints:
       - "[STATUS] == 200"
     alerts:
       - type: email
+        description: "Gitea git server is down. Runs on Synology — check if NAS is online."
 
+  # Protected by basic auth — 401 means Caddy is serving correctly.
   - name: "Dosar"
     group: "Public"
     url: "https://dosar.christiantanul.com"
@@ -314,6 +382,11 @@ endpoints:
       - "[STATUS] == 401"
     alerts:
       - type: email
+        description: "Dosar document viewer is unreachable."
+
+  # ─── Synology DS923+ (192.168.0.14) ───────────────────────
+  # NAS at home running Docker services. All endpoints go down
+  # together if the NAS shuts off (e.g., thermal shutdown).
 
   - name: "Synology Ping"
     group: "Synology"
@@ -323,6 +396,7 @@ endpoints:
       - "[CONNECTED] == true"
     alerts:
       - type: email
+        description: "Synology DS923+ NAS is not responding to ping. It may have shut down (check email for thermal alerts) or lost network."
 
   - name: "DSM"
     group: "Synology"
@@ -334,6 +408,7 @@ endpoints:
       - "[STATUS] == any(200, 301, 302)"
     alerts:
       - type: email
+        description: "Synology DSM web interface is down."
 
   - name: "Sonarr"
     group: "Synology"
@@ -345,6 +420,7 @@ endpoints:
       - "[STATUS] == any(200, 301, 302)"
     alerts:
       - type: email
+        description: "Sonarr (TV show manager) is down on Synology."
 
   - name: "Radarr"
     group: "Synology"
@@ -356,6 +432,7 @@ endpoints:
       - "[STATUS] == any(200, 301, 302)"
     alerts:
       - type: email
+        description: "Radarr (movie manager) is down on Synology."
 
   - name: "Jellyfin"
     group: "Synology"
@@ -367,6 +444,7 @@ endpoints:
       - "[STATUS] == any(200, 301, 302)"
     alerts:
       - type: email
+        description: "Jellyfin media server is down on Synology."
 
   - name: "qBittorrent"
     group: "Synology"
@@ -378,6 +456,7 @@ endpoints:
       - "[STATUS] == any(200, 301, 302)"
     alerts:
       - type: email
+        description: "qBittorrent is down on Synology."
 
   - name: "Wakapi"
     group: "Synology"
@@ -389,6 +468,7 @@ endpoints:
       - "[STATUS] == any(200, 301, 302)"
     alerts:
       - type: email
+        description: "Wakapi coding time tracker is down on Synology."
 
   - name: "Downloads"
     group: "Synology"
@@ -400,6 +480,7 @@ endpoints:
       - "[STATUS] == any(200, 301, 302)"
     alerts:
       - type: email
+        description: "Download manager is down on Synology."
 
   - name: "Photos"
     group: "Synology"
@@ -411,6 +492,7 @@ endpoints:
       - "[STATUS] == any(200, 301, 302)"
     alerts:
       - type: email
+        description: "Synology Photos is down."
 
   - name: "Drive"
     group: "Synology"
@@ -422,6 +504,7 @@ endpoints:
       - "[STATUS] == any(200, 301, 302)"
     alerts:
       - type: email
+        description: "Synology Drive is down. File sync between devices will stop."
 
   - name: "Files"
     group: "Synology"
@@ -433,6 +516,7 @@ endpoints:
       - "[STATUS] == any(200, 301, 302)"
     alerts:
       - type: email
+        description: "Synology File Station is down."
 
   - name: "Calendar"
     group: "Synology"
@@ -444,6 +528,7 @@ endpoints:
       - "[STATUS] == any(200, 301, 302)"
     alerts:
       - type: email
+        description: "Synology Calendar (CalDAV) is down. Calendar sync will stop."
 
   - name: "Contacts"
     group: "Synology"
@@ -455,6 +540,7 @@ endpoints:
       - "[STATUS] == any(200, 301, 302)"
     alerts:
       - type: email
+        description: "Synology Contacts (CardDAV) is down. Contact sync will stop."
 
   - name: "Mail"
     group: "Synology"
@@ -466,6 +552,7 @@ endpoints:
       - "[STATUS] == any(200, 301, 302)"
     alerts:
       - type: email
+        description: "Synology MailPlus is down."
 
   - name: "Surveillance"
     group: "Synology"
@@ -477,6 +564,7 @@ endpoints:
       - "[STATUS] == any(200, 301, 302)"
     alerts:
       - type: email
+        description: "Synology Surveillance Station is down. Camera recording and monitoring stopped."
 
   - name: "VMs"
     group: "Synology"
@@ -488,6 +576,9 @@ endpoints:
       - "[STATUS] == any(200, 301, 302)"
     alerts:
       - type: email
+        description: "Synology Virtual Machine Manager is down."
+
+  # ─── Synology-2 (remote site, via Tailscale) ──────────────
 
   - name: "Synology-2 Ping"
     group: "Synology-2"
@@ -497,6 +588,7 @@ endpoints:
       - "[CONNECTED] == true"
     alerts:
       - type: email
+        description: "Synology-2 at remote site is not responding. Device may be offline or Tailscale disconnected."
 
   - name: "DSM-2"
     group: "Synology-2"
@@ -508,6 +600,7 @@ endpoints:
       - "[STATUS] == any(200, 301, 302)"
     alerts:
       - type: email
+        description: "Synology-2 DSM web interface is down."
 
   - name: "AdGuard-2"
     group: "Synology-2"
@@ -519,6 +612,9 @@ endpoints:
       - "[STATUS] == 200"
     alerts:
       - type: email
+        description: "AdGuard Home on Synology-2 is down. Secondary/failover DNS is unavailable."
+
+  # ─── Proxmox (via Tailscale) ───────────────────────────────
 
   - name: "Proxmox"
     group: "Proxmox"
@@ -531,3 +627,4 @@ endpoints:
       - "[STATUS] == any(200, 301, 302)"
     alerts:
       - type: email
+        description: "Proxmox hypervisor is unreachable. VMs running on it may also be affected."

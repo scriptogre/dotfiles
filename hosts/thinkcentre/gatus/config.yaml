@@ -23,7 +23,7 @@ ui:
 endpoints:
   - name: "DNS (AdGuard 1)"
     group: "Infra"
-    url: "192.168.0.12"
+    url: "192.168.0.12:53"
     interval: 60s
     dns:
       query-name: "christiantanul.com"
@@ -36,7 +36,7 @@ endpoints:
 
   - name: "DNS (AdGuard 2)"
     group: "Infra"
-    url: "100.114.162.56"
+    url: "100.114.162.56:53"
     interval: 60s
     dns:
       query-name: "christiantanul.com"
@@ -263,15 +263,6 @@ endpoints:
     alerts:
       - type: email
 
-  - name: "Analytics (Plausible)"
-    group: "Public"
-    url: "https://analytics.intreabalegea.ro"
-    interval: 5m
-    conditions:
-      - "[STATUS] == 200"
-    alerts:
-      - type: email
-
   - name: "Bad Apple"
     group: "Public"
     url: "https://bad-apple.christiantanul.com"
@@ -304,7 +295,7 @@ endpoints:
     url: "https://game.christiantanul.com"
     interval: 5m
     conditions:
-      - "[STATUS] == 200"
+      - "[STATUS] == any(200, 404)"
     alerts:
       - type: email
 

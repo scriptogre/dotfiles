@@ -199,6 +199,10 @@ calendar.christiantanul.com {
 
 contacts.christiantanul.com {
     import cf-tls
+
+    @carddav path /.well-known/carddav
+    redir @carddav /carddav/chris permanent
+
     reverse_proxy 192.168.0.14:25555
 }
 

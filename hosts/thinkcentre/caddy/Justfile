@@ -1,0 +1,20 @@
+default: reload
+
+# Reloads Caddy configuration (after updating Caddyfile) with zero downtime
+reload: up
+    docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile
+
+# Start container
+up: network
+    docker compose up -d
+
+# Stop & remove containers
+down:
+    docker compose down
+
+# Create external network
+network:
+    @if ! docker network inspect proxy > /dev/null 2>&1; then \
+        echo "Creating external Docker network: proxy"; \
+        docker network create proxy; \
+    fi

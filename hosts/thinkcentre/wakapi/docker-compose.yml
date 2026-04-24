@@ -1,0 +1,34 @@
+services:
+  wakapi:
+    image: n1try/wakapi:latest
+    healthcheck:
+      disable: true
+    container_name: wakapi
+    init: true
+    user: "1000:100"
+    expose: [ 3000 ]
+    networks: [ proxy, default ]
+    volumes:
+      - wakapi_data:/data
+    environment:
+      ENVIRONMENT: prod
+      WAKAPI_DB_TYPE: sqlite3
+      WAKAPI_DB_NAME: /data/wakapi.db
+      WAKAPI_LISTEN_IPV4: 0.0.0.0
+      WAKAPI_PORT: "3000"
+      WAKAPI_BASE_PATH: /
+      WAKAPI_PUBLIC_URL: https://wakapi.christiantanul.com
+      WAKAPI_ALLOW_SIGNUP: "true"
+      WAKAPI_DISABLE_FRONTPAGE: "true"
+      WAKAPI_LEADERBOARD_ENABLED: "false"
+      WAKAPI_INSECURE_COOKIES: "true"
+    env_file:
+      - .env
+    restart: unless-stopped
+
+volumes:
+  wakapi_data:
+
+networks:
+  proxy:
+    external: true

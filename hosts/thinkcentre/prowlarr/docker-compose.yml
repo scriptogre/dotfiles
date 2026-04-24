@@ -1,0 +1,25 @@
+services:
+  prowlarr:
+    image: ghcr.io/hotio/prowlarr:testing
+    container_name: prowlarr
+    environment:
+      PUID: "1000"
+      PGID: "100"
+      TZ: Europe/Bucharest
+      UMASK: "002"
+    expose: [ 9696 ]
+    ports:
+      # TEMPORARY: Sonarr/Radarr still on Synology reach Prowlarr via LAN IP.
+      # Remove this ports: block once Sonarr+Radarr migrate and use proxy network (prowlarr:9696).
+      - "9696:9696"
+    volumes:
+      - prowlarr_config:/config
+    networks: [ proxy, default ]
+    restart: unless-stopped
+
+volumes:
+  prowlarr_config:
+
+networks:
+  proxy:
+    external: true

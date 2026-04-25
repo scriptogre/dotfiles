@@ -8,10 +8,6 @@ services:
       TZ: Europe/Bucharest
       UMASK: "002"
     expose: [ 9696 ]
-    ports:
-      # TEMPORARY: Sonarr/Radarr still on Synology reach Prowlarr via LAN IP.
-      # Remove this ports: block once Sonarr+Radarr migrate and use proxy network (prowlarr:9696).
-      - "9696:9696"
     volumes:
       - prowlarr_config:/config
     networks: [ proxy, default ]

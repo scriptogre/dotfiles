@@ -1,0 +1,19 @@
+radarr:
+  uhd-bluray-web:
+    base_url: !env_var RADARR_BASE_URL
+    api_key: !env_var RADARR_API_KEY
+
+    include:
+      - template: radarr-quality-definition-movie
+      - template: radarr-quality-profile-uhd-bluray-web
+      - template: radarr-custom-formats-uhd-bluray-web
+
+sonarr:
+  web-2160p-v4:
+    base_url: !env_var SONARR_BASE_URL
+    api_key: !env_var SONARR_API_KEY
+
+    include:
+      - template: sonarr-quality-definition-series
+      - template: sonarr-v4-quality-profile-web-2160p
+      - template: sonarr-v4-custom-formats-web-2160p

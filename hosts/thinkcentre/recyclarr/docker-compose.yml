@@ -1,0 +1,27 @@
+services:
+  recyclarr:
+    image: ghcr.io/recyclarr/recyclarr:7.4.1
+    container_name: recyclarr
+    user: "1000:100"
+    environment:
+      TZ: Europe/Bucharest
+      CRON_SCHEDULE: "@daily"
+      RECYCLARR_CREATE_CONFIG: "false"
+      RADARR_BASE_URL: http://radarr:7878
+      SONARR_BASE_URL: http://sonarr:8989
+      RADARR_API_KEY: ${RADARR_API_KEY}
+      SONARR_API_KEY: ${SONARR_API_KEY}
+    env_file:
+      - .env
+    volumes:
+      - recyclarr_config:/config
+      - ./recyclarr.yml:/config/recyclarr.yml:ro
+    networks: [ proxy, default ]
+    restart: unless-stopped
+
+volumes:
+  recyclarr_config:
+
+networks:
+  proxy:
+    external: true

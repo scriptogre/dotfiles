@@ -97,6 +97,7 @@
                 3000   # SpacetimeDB
                 3389   # RDP
                 5900   # VNC (Windows VM install)
+                6881   # qBittorrent peer connections (TCP)
                 8123   # Home Assistant
                 8384   # Syncthing GUI (behind Caddy lan-only)
                 32400  # Plex
@@ -104,6 +105,7 @@
               allowedUDPPorts = [
                 53     # DNS (AdGuard)
                 443    # HTTP/3 (Caddy)
+                6881   # qBittorrent peer connections (UDP, DHT)
                 8853   # DNS-over-QUIC (AdGuard)
               ];
             };

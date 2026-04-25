@@ -254,7 +254,7 @@ sonarr.christiantanul.com {
 qbittorrent.christiantanul.com {
     import cf-tls
     import lan-only
-    reverse_proxy 192.168.0.14:9865
+    reverse_proxy qbittorrent:9865
 }
 
 wakapi.christiantanul.com {

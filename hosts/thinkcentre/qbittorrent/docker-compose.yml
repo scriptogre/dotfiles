@@ -1,0 +1,28 @@
+services:
+  qbittorrent:
+    image: ghcr.io/hotio/qbittorrent:release
+    container_name: qbittorrent
+    environment:
+      PUID: "1000"
+      PGID: "100"
+      TZ: Europe/Bucharest
+      UMASK: "002"
+      WEBUI_PORTS: "9865/tcp,9865/udp"
+    expose: [ 9865 ]
+    ports:
+      # Peer connections — must match the routers port-forward target.
+      # Router rule: external 6881 -> 192.168.0.12:6881 (was 192.168.0.14:6881).
+      - "6881:6881/tcp"
+      - "6881:6881/udp"
+    volumes:
+      - qbittorrent_config:/config
+      - /mnt/nas/media_server/torrents:/data/torrents
+    networks: [ proxy, default ]
+    restart: unless-stopped
+
+volumes:
+  qbittorrent_config:
+
+networks:
+  proxy:
+    external: true

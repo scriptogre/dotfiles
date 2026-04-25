@@ -403,8 +403,8 @@ endpoints:
         description: "Synology DSM web interface is down."
 
   - name: "Sonarr"
-    group: "Synology"
-    url: "http://192.168.0.14:8989"
+    group: "Services"
+    url: "http://sonarr:8989"
     interval: 5m
     client:
       timeout: 10s
@@ -412,11 +412,11 @@ endpoints:
       - "[STATUS] == any(200, 301, 302)"
     alerts:
       - type: email
-        description: "Sonarr (TV show manager) is down on Synology."
+        description: "Sonarr (TV show manager) is down."
 
   - name: "Radarr"
-    group: "Synology"
-    url: "http://192.168.0.14:7878"
+    group: "Services"
+    url: "http://radarr:7878"
     interval: 5m
     client:
       timeout: 10s
@@ -424,12 +424,23 @@ endpoints:
       - "[STATUS] == any(200, 301, 302)"
     alerts:
       - type: email
-        description: "Radarr (movie manager) is down on Synology."
+        description: "Radarr (movie manager) is down."
 
+  - name: "Prowlarr"
+    group: "Services"
+    url: "http://prowlarr:9696"
+    interval: 5m
+    client:
+      timeout: 10s
+    conditions:
+      - "[STATUS] == any(200, 301, 302)"
+    alerts:
+      - type: email
+        description: "Prowlarr (indexer aggregator for Sonarr/Radarr) is down."
 
   - name: "qBittorrent"
-    group: "Synology"
-    url: "http://192.168.0.14:9865"
+    group: "Services"
+    url: "http://qbittorrent:9865"
     interval: 5m
     client:
       timeout: 10s
@@ -437,19 +448,19 @@ endpoints:
       - "[STATUS] == any(200, 301, 302)"
     alerts:
       - type: email
-        description: "qBittorrent is down on Synology."
+        description: "qBittorrent is down."
 
   - name: "Wakapi"
-    group: "Synology"
-    url: "http://192.168.0.14:3000"
+    group: "Services"
+    url: "http://wakapi:3000/api/health"
     interval: 5m
     client:
       timeout: 10s
     conditions:
-      - "[STATUS] == any(200, 301, 302)"
+      - "[STATUS] == 200"
     alerts:
       - type: email
-        description: "Wakapi coding time tracker is down on Synology."
+        description: "Wakapi coding time tracker is down."
 
   - name: "Downloads"
     group: "Synology"

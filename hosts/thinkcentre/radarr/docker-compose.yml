@@ -1,0 +1,22 @@
+services:
+  radarr:
+    image: ghcr.io/hotio/radarr:release
+    container_name: radarr
+    environment:
+      PUID: "1000"
+      PGID: "100"
+      TZ: Europe/Bucharest
+      UMASK: "002"
+    expose: [ 7878 ]
+    volumes:
+      - radarr_config:/config
+      - /mnt/nas/media_server:/data
+    networks: [ proxy, default ]
+    restart: unless-stopped
+
+volumes:
+  radarr_config:
+
+networks:
+  proxy:
+    external: true

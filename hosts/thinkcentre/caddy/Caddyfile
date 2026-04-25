@@ -242,7 +242,7 @@ cam.christiantanul.com {
 radarr.christiantanul.com {
     import cf-tls
     import lan-only
-    reverse_proxy 192.168.0.14:7878
+    reverse_proxy radarr:7878
 }
 
 sonarr.christiantanul.com {

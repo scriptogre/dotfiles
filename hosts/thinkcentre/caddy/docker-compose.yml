@@ -17,7 +17,7 @@ services:
       - website_dist:/srv/website:ro
       - game_web:/srv/game:ro
       - /tmp/razvanaga:/srv/razvanaga:ro
-      - /home/chris/Projects/dosar-maghieru:/srv/dosar:ro
+      - /home/chris/Projects/dosar-maghieru/www/_site:/srv/dosar:ro
     restart: always
 
 volumes:

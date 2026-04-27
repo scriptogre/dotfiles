@@ -74,7 +74,6 @@ dosar.christiantanul.com {
         adina $2a$14$uqLwUhv2Rz2hNqS6tVzEg.oY3s0Mte.iP8gAcdkhivilbDlC.Swt2
     }
     root * /srv/dosar
-    try_files {path} /index.html
     file_server
     encode gzip
 }
@@ -301,6 +300,19 @@ game.christiantanul.com {
 hyperspace.christiantanul.com {
     import cf-tls
     reverse_proxy spacetimedb:3000
+}
+
+# Anki bot — public access ONLY for /media/* (image + audio served as static files
+# referenced from flashcards). All API endpoints stay private on the proxy network.
+anki-media.christiantanul.com {
+    import cf-tls
+    @media path /media/*
+    handle @media {
+        reverse_proxy anki-bot:8080
+    }
+    handle {
+        respond 404
+    }
 }
 
 # - - - - - - - - - - - - -

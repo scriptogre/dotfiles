@@ -14,7 +14,10 @@
       system = "x86_64-linux";
       modules = [
         ./hardware-configuration.nix
-        # ./gaming-vm.nix  # Disabled — reclaim 41GB disk space
+        ./adguard/sync-rewrites.nix
+        ./vaultwarden/backup.nix
+        ./gatus/systemd-failed-snapshot.nix
+        # ./gaming-vm.nix  # Temporarily disabled
         # Home Manager
         home-manager.nixosModules.home-manager
         {
@@ -25,8 +28,7 @@
             imports = [ ../../common/home.nix ];
             home.username = "chris";
             home.homeDirectory = "/home/chris";
-            # Disable home-manager Syncthing — the system-level service handles
-            # it with guiAddress=0.0.0.0:8384 (needed for Caddy reverse proxy).
+            # Disable home-manager Syncthing (system-level service handles it with guiAddress=0.0.0.0:8384, needed for Caddy reverse proxy).
             services.syncthing.enable = lib.mkForce false;
             dconf.settings = {
               "org/gnome/desktop/session" = {
@@ -37,7 +39,7 @@
               };
             };
 
-            # cd <service> from anywhere — resolves infra services then projects
+            # Enable `cd <service>` from anywhere
             programs.zsh.initContent = lib.mkAfter ''
               export CDPATH=".:$HOME/Projects/dotfiles/hosts/thinkcentre:$HOME/Projects"
             '';
@@ -86,6 +88,12 @@
                 };
               };
             };
+            # /etc/hosts entries — generated from common/network/aliases.nix.
+            # Single source of truth: common/network/aliases.nix.
+            networking.hosts = lib.mapAttrs'
+              (name: cfg: lib.nameValuePair cfg.ip [ name ])
+              (import ../../common/network/aliases.nix).hosts;
+
             networking.firewall = {
               enable = true;
               trustedInterfaces = [ "tailscale0" ];
@@ -128,7 +136,7 @@
 
             # SMB credentials for Synology NAS (stored in /var/lib, which persists across rebuilds).
             #
-            # If you ever need to update these (e.g. after changing your Synology password):
+            # If you ever need to update these (e.g. after changing Synology password):
             #   1. On your Mac, run:  op read 'op://wntgzcyr5x3bxict6nnuroeigu/abpyarbqdajzkug7x3o7webp4y/password'
             #   2. SSH into thinkcentre:  ssh thinkcentre
             #   3. Write the credentials file:

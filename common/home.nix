@@ -1,4 +1,7 @@
-{ pkgs, lib, ... }: {
+{ config, pkgs, lib, ... }:
+let
+  dotfiles = "${config.home.homeDirectory}/Projects/dotfiles";
+in {
   home.stateVersion = "25.05";
 
   # Ensure ~/.local/bin is in PATH (for official Claude Code installer, etc.)
@@ -17,7 +20,7 @@
       enable = true;
       plugins = [ "git" ];
     };
-    initContent = builtins.readFile ./shell/zshrc;
+    initContent = "source ${dotfiles}/common/shell/zshrc";
     plugins = [
       {
         name = "powerlevel10k";
@@ -30,13 +33,25 @@
   services.syncthing.enable = true;
 
   # Shared dotfiles
-  home.file.".gitconfig".source = ./git/config;
+  home.file.".gitconfig".source = config.lib.file.mkOutOfStoreSymlink "${dotfiles}/common/git/config";
   home.file.".config/git/ignore".source = ./git/ignore;
-  home.file.".p10k.zsh".source = ./shell/p10k.zsh;
+  home.file.".p10k.zsh".source = config.lib.file.mkOutOfStoreSymlink "${dotfiles}/common/shell/p10k.zsh";
 
   # SSH host definitions (included from ~/.ssh/config via "Include config.d/*")
   # ~/.ssh/config itself is left unmanaged so 1Password and OrbStack can edit it.
-  home.file.".ssh/config.d/hosts".source = ./ssh/hosts;
+  # Generated from common/network/aliases.nix — single source of truth.
+  home.file.".ssh/config.d/hosts".text =
+    let
+      aliases = import ./network/aliases.nix;
+      mkBlock = name: cfg:
+        if cfg ? ssh then ''
+          Host ${name}
+            HostName ${cfg.ip}
+            User ${cfg.ssh.user}
+            ForwardAgent yes
+        '' else "";
+    in
+      lib.concatStrings (lib.mapAttrsToList mkBlock aliases.hosts);
 
   # Shared packages
   home.packages = with pkgs; [
@@ -57,6 +72,7 @@
     # Secrets management
     _1password-cli
     age
+    zstd
 
     # System utilities
     iperf3

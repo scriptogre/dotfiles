@@ -1,6 +1,8 @@
 services:
   vaultwarden:
-    image: vaultwarden/server:latest
+    # Pinned. Bump intentionally after reviewing release notes:
+    # https://github.com/dani-garcia/vaultwarden/releases
+    image: vaultwarden/server:1.35.8-alpine
     container_name: vaultwarden
     restart: unless-stopped
     expose: [ 80 ]
@@ -8,14 +10,30 @@ services:
       - proxy
       - default
     volumes:
-      - vaultwarden_data:/data
+      # Bind mount (not docker-managed volume) so backups can read the live
+      # data directory directly. See README.md for one-time migration steps
+      # from the legacy `vaultwarden_vaultwarden_data` named volume.
+      - /var/lib/vaultwarden/data:/data
     environment:
-      - ADMIN_TOKEN=admin
       - DOMAIN=https://vault.christiantanul.com
-      - SIGNUPS_ALLOWED=true
+      - SIGNUPS_ALLOWED=${SIGNUPS_ALLOWED:-false}
+      - INVITATIONS_ALLOWED=${INVITATIONS_ALLOWED:-true}
+      # Argon2 hash of the real token; raw token lives in 1Password.
+      # Generate the hash with `vaultwarden hash` — see README.md.
+      - ADMIN_TOKEN=${ADMIN_TOKEN}
+      # Brute-force resistance.
+      - LOGIN_RATELIMIT_MAX_BURST=10
+      - LOGIN_RATELIMIT_SECONDS=60
+      - ADMIN_RATELIMIT_MAX_BURST=3
+      - ADMIN_RATELIMIT_SECONDS=300
+      # Quality-of-life.
+      - PUSH_ENABLED=false
+      - SHOW_PASSWORD_HINT=false
+      - WEB_VAULT_ENABLED=true
+      - LOG_LEVEL=warn
+      # SQLite default at /data/db.sqlite3 — no override needed.
 
-volumes:
-  vaultwarden_data:
+volumes: {}
 
 networks:
   proxy:

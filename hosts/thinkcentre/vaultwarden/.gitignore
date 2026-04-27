@@ -1,0 +1,8 @@
+# Production secrets — ThinkCentre only, never committed.
+.env
+
+# Age recipient/identity files. The PUBLIC recipient (`backup.age.pub`)
+# is safe to commit; the PRIVATE identity (`backup.age.key`) must NOT
+# be on the ThinkCentre at all — it lives in 1Password.
+backup.age.key
+*.age.key

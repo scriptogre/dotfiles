@@ -19,6 +19,7 @@
     darwinConfigurations."macbook" = nix-darwin.lib.darwinSystem {
       system = "aarch64-darwin";
       modules = [
+        ./onepassword-export/launchd.nix
         # System configuration
         {
           nixpkgs.config.allowUnfree = true;
@@ -181,7 +182,6 @@
               "bettertouchtool"
               "brave-browser"
               "codex"
-              "claude-code"
               "firefox"
               "ghostty"
               "google-chrome"
@@ -216,7 +216,7 @@
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
           home-manager.backupFileExtension = "backup";
-          home-manager.users.chris = { pkgs, lib, ... }: {
+          home-manager.users.chris = { config, pkgs, lib, ... }: {
             imports = [ ../../common/home.nix ];
 
             home.username = "chris";
@@ -229,13 +229,13 @@
 
             # Karabiner config for key remaps (note: overwrites remaps created in the UI)
             home.file.".config/karabiner/karabiner.json" = {
-                source = ./../../common/karabiner/karabiner.json;
+                source = config.lib.file.mkOutOfStoreSymlink "/Users/chris/Projects/dotfiles/common/karabiner/karabiner.json";
                 force = true;
             };
 
-            # Ghostty terminal config
+            # Ghostty terminal config (symlinks to repo for live-reload on save)
             home.file.".config/ghostty/config" = {
-                source = ./../../common/ghostty/config;
+                source = config.lib.file.mkOutOfStoreSymlink "/Users/chris/Projects/dotfiles/common/ghostty/config";
                 force = true;
             };
 

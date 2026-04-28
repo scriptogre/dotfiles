@@ -9,6 +9,11 @@ fi
 # Powerlevel10k settings
 POWERLEVEL9K_PROMPT_ON_NEWLINE=true
 
+# Word-deletion keybindings (not bound by zsh by default)
+bindkey '^[[3;5~' kill-word            # Ctrl+Delete  → delete word forward
+bindkey '^H'      backward-kill-word   # Ctrl+Backspace → delete word backward
+bindkey '^U'      backward-kill-word   # CMD+Backspace  → delete word backward (overrides kill-whole-line)
+
 # 1Password SSH agent (configured via home-manager programs.ssh)
 
 # Writable npm global prefix (shadows Nix packages when needed)
@@ -17,60 +22,22 @@ export PATH="$HOME/.npm-global/bin:$PATH"
 
 alias rsynca='rsync -avzP'
 
-# Claude Code multi-account isolation
-# Each function uses a separate config directory for independent login sessions
-# History is shared via symlink; projects are separate to avoid sessions-index.json race conditions
-_claude_shared_init() {
-  local config_dir="$CLAUDE_CONFIG_DIR"
-  local all_accounts=(.claude-1 .claude-2 .claude-3 .claude-4 .claude-5 .claude-6 .claude-oncogen)
+# Claude Code: disable auto-updater nag + fix Bun/JSC idle CPU spin
+# https://github.com/anthropics/claude-code/issues/22509
+export DISABLE_AUTOUPDATER=1
+export MIMALLOC_PURGE_DELAY=0
+export MIMALLOC_ARENA_EAGER_COMMIT=0
+export BUN_JSC_gcMaxHeapSize=1500000000
+export BUN_JSC_smallHeapRAMFraction=0.05
+export BUN_JSC_mediumHeapRAMFraction=0.15
+export BUN_GC_TIMER_INTERVAL=300
 
-  # Fix Bun/JSC idle CPU spin: without these, each session pins a full core at 100%
-  # even when idle. See https://github.com/anthropics/claude-code/issues/22509
-  export MIMALLOC_PURGE_DELAY=0
-  export MIMALLOC_ARENA_EAGER_COMMIT=0
-  export BUN_JSC_gcMaxHeapSize=1500000000
-  export BUN_JSC_smallHeapRAMFraction=0.05
-  export BUN_JSC_mediumHeapRAMFraction=0.15
-  export BUN_GC_TIMER_INTERVAL=300
-
-  mkdir -p "$config_dir/projects"
-
-  # Symlink shared files from primary config
-  ln -sf "$HOME/.claude/history.jsonl" "$config_dir/history.jsonl" 2>/dev/null
-  ln -sf "$HOME/.claude/settings.json" "$config_dir/settings.json" 2>/dev/null
-
-  # Sync session files from all other accounts to this account (in background)
-  # This enables --resume to find sessions started on other accounts
-  # Each account keeps its own sessions-index.json (avoids race condition)
-  {
-    for account in "${all_accounts[@]}"; do
-      src="$HOME/$account/projects"
-      [[ -d "$src" && "$src" != "$config_dir/projects" ]] || continue
-
-      # Sync *.jsonl session files (but NOT sessions-index.json)
-      for project_dir in "$src"/*(/N); do
-        project_name="${project_dir:t}"
-        dest_project="$config_dir/projects/$project_name"
-        mkdir -p "$dest_project"
-
-        for session_file in "$project_dir"/*.jsonl(N); do
-          session_name="${session_file:t}"
-          [[ "$session_name" == "sessions-index.json" ]] && continue
-          dest_file="$dest_project/$session_name"
-          # Only copy if source is newer or dest doesn't exist
-          [[ -f "$dest_file" && "$dest_file" -nt "$session_file" ]] || cp -p "$session_file" "$dest_file" 2>/dev/null
-        done
-      done
-    done
-  } &!
-}
-claude-1() { export CLAUDE_CONFIG_DIR="$HOME/.claude-1"; _claude_shared_init; claude "$@"; }
-claude-2() { export CLAUDE_CONFIG_DIR="$HOME/.claude-2"; _claude_shared_init; claude "$@"; }
-claude-3() { export CLAUDE_CONFIG_DIR="$HOME/.claude-3"; _claude_shared_init; claude "$@"; }
-claude-4() { export CLAUDE_CONFIG_DIR="$HOME/.claude-4"; _claude_shared_init; claude "$@"; }
-claude-5() { export CLAUDE_CONFIG_DIR="$HOME/.claude-5"; _claude_shared_init; claude "$@"; }
-claude-6() { export CLAUDE_CONFIG_DIR="$HOME/.claude-6"; _claude_shared_init; claude "$@"; }
-claude-oncogen() { export CLAUDE_CONFIG_DIR="$HOME/.claude-oncogen"; _claude_shared_init; claude "$@"; }
+# Claude Code: disable claude.ai MCP servers (Gmail/Calendar/Drive) and unused tools.
+# Read at startup by the patched native binary. settings.json `env` only injects
+# into spawned subprocesses (hooks/MCP/Bash tool), not the main process — these
+# must live in shell env.
+export ENABLE_CLAUDEAI_MCP_SERVERS=false
+export CLAUDE_DISABLED_TOOLS=NotebookEdit,CronCreate,CronDelete,CronList,EnterWorktree,ExitWorktree,RemoteTrigger,ScheduleWakeup,TaskOutput,Monitor,TaskStop,PushNotification
 
 # -----------------------------------------------------------------------------
 # finda: search for filenames or directory names locally or on a remote host,

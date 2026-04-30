@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "model": "claude-opus-4-6[1m]",
+  "effortLevel": "max",
+  "verbose": true,
+  "autoUpdatesChannel": "latest",
+  "minimumVersion": "2.1.81",
+  "autoUpdates": false,
+  "autoCompactEnabled": false,
+  "autoMemoryEnabled": false,
+  "skipDangerousModePermissionPrompt": true,
+  "voiceEnabled": true,
+  "agentPushNotifEnabled": false,
+  "outputStyle": "default",
+  "spinnerTipsEnabled": true,
+  "enabledPlugins": {
+    "code-simplifier@claude-plugins-official": false,
+    "frontend-design@claude-plugins-official": false
+  },
+  "disabledMcpjsonServers": [
+    "claude.ai Gmail",
+    "claude.ai Google Calendar",
+    "claude.ai Google Drive"
+  ],
+  "env": {
+    "CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS": "1"
+  },
+  "permissions": {
+    "defaultMode": "default",
+    "allow": [
+      "WebSearch",
+
+      "Bash(git:*)",
+      "Bash(gh:*)",
+
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(cat:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(wc:*)",
+      "Bash(du:*)",
+      "Bash(fd:*)",
+      "Bash(sort:*)",
+      "Bash(awk:*)",
+      "Bash(sed:*)",
+      "Bash(echo:*)",
+
+      "Bash(ssh:*)",
+      "Bash(scp:*)",
+      "Bash(rsync:*)",
+      "Bash(curl:*)",
+      "Bash(dig:*)",
+      "Bash(ping:*)",
+      "Bash(nslookup:*)",
+
+      "Bash(bun:*)",
+      "Bash(bun run:*)",
+      "Bash(bun install:*)",
+      "Bash(bun test:*)",
+      "Bash(uv:*)",
+      "Bash(uv run:*)",
+      "Bash(uv sync:*)",
+      "Bash(uv add:*)",
+      "Bash(cargo:*)",
+
+      "Bash(just:*)",
+      "Bash(docker compose:*)",
+      "Bash(docker ps:*)",
+      "Bash(docker system:*)",
+
+      "Bash(nix-env:*)",
+      "Bash(nix search:*)",
+      "Bash(nix eval:*)",
+
+      "Bash(python3:*)",
+      "Bash(python:*)",
+      "Bash(node:*)",
+
+      "Bash(op read:*)",
+      "Bash(op item:*)",
+
+      "Bash(md5:*)",
+      "Bash(shasum:*)",
+      "Bash(openssl rand:*)",
+      "Bash(chmod +x:*)",
+      "Bash(mkdir:*)",
+      "Bash(command -v:*)",
+      "Bash(brew:*)",
+      "Bash(ps:*)",
+      "Bash(lsof:*)",
+      "Bash(pgrep:*)",
+      "Bash(top:*)",
+      "Bash(sqlite3:*)",
+
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs"
+    ],
+    "deny": [],
+    "ask": []
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "afplay /System/Library/Sounds/Funk.aiff"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "afplay /System/Library/Sounds/Purr.aiff"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const fs=require('fs');const p=require('path').join(process.env.HOME,'.claude','settings.json');if(fs.existsSync(p)){const j=JSON.parse(fs.readFileSync(p,'utf-8'));j.model='claude-opus-4-6[1m]';j.effortLevel='max';if(j.permissions&&j.permissions.defaultMode==='auto')delete j.permissions.defaultMode;fs.writeFileSync(p,JSON.stringify(j,null,2))}\""
+          }
+        ]
+      }
+    ]
+  }
+}

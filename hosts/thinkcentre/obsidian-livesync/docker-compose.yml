@@ -1,0 +1,19 @@
+services:
+  couchdb:
+    image: oleduc/docker-obsidian-livesync-couchdb:latest
+    container_name: obsidian-couchdb
+    restart: unless-stopped
+    environment:
+      - COUCHDB_USER=${COUCHDB_USER}
+      - COUCHDB_PASSWORD=${COUCHDB_PASSWORD}
+      - SERVER_DOMAIN=obsidian.christiantanul.com
+    volumes:
+      - couchdb_data:/opt/couchdb/data
+
+volumes:
+  couchdb_data:
+
+networks:
+  default:
+    name: proxy
+    external: true

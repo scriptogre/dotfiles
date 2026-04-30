@@ -1,5 +1,23 @@
 [
   {
+    "name": "language-companion-daily",
+    "schedule": {
+      "kind": "cron",
+      "expr": "0 8 * * *",
+      "tz": "Europe/Bucharest"
+    },
+    "sessionTarget": "isolated",
+    "payload": {
+      "kind": "agentTurn",
+      "message": "Time for the daily language-learning interaction. Use the anki skill. For each user from GET http://anki-bot:8080/users with wizard_completed=true and a telegram_user_id, open a conversation directly with them. Pick a fresh topic from their interests (rotate, don't repeat yesterday's). Speak mostly in target_language at their proficiency_level, with a brief native_language gloss in parentheses for beginners. Example for a zero-proficiency Polish learner with native Romanian: \"Cze\u015b\u0107! (Salut!) Hai s\u0103 vorbim un pic despre homelab. Czy masz w domu serwer? (Ai un server acas\u0103?)\". Ask open questions, let them respond, drop into native_language only to scaffold or explain. As you go, track 3-7 new words they encounter. Length is whatever feels natural. When the conversation reaches a natural end, briefly summarize new vocabulary in native_language and auto-create cards via POST http://anki-bot:8080/cards (with `auto:` block, ALL fields required, tagged with topic + date). Close with one motivating sentence in target_language + native_language gloss. If the user replies they're busy or want to skip, respect it briefly and end. If no users configured, skip silently.",
+      "trigger": "language-companion-daily"
+    },
+    "delivery": {
+      "mode": "none"
+    },
+    "agentId": "assistant"
+  },
+  {
     "name": "withings-token-refresh",
     "schedule": {
       "kind": "cron",

@@ -79,11 +79,12 @@
   ],
   "messages": {
     "tts": {
-      "auto": "inbound",
+      "auto": "off",
       "provider": "openai",
       "openai": {
-        "model": "gpt-4o-mini-tts",
-        "voice": "cedar"
+        "baseUrl": "http://anki-bot:8080/v1",
+        "model": "gemini-tts",
+        "voice": "Kore"
       }
     }
   },

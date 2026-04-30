@@ -52,6 +52,20 @@ Everything is managed declaratively in the dotfiles repo. To understand the curr
 - **Check-in frequency:** as needed
 - **Proactive nudges:** yes - open to nutrition and training nudges
 
+## Language learning
+- **Target language:** Polish
+- **Native language:** Romanian
+- **Polish proficiency:** zero
+- **Pronunciation style preference:** Romanian-style phonetic spelling. Write the Polish word as a Romanian native would spell it to read it aloud naturally. Use Romanian letters/conventions (ș, ț, î, ă, etc.). No brackets, no IPA symbols.
+- **Pronunciation example:** ceșsti for cześć
+- **Topics of interest** (anchor for daily Polish conversation):
+  - Rust + Python tooling (uv, async, building a project called `hyper` at github.com/scriptogre/hyper)
+  - refactoring + project organization (drug-research-app)
+  - homelab + self-hosting (Synology DS923+, ThinkCentre m80q Gen 4, NixOS, Caddy, Docker)
+  - nutrition + biochemistry (Andrew Huberman style)
+  - Big Five personality traits (Jordan Peterson)
+  - quantum physics, Einstein-Bohr debate
+
 ## Notes
 - Currently on semaglutide (dose increased from 0.25mg to 0.5mg on March 19, 2026 - 5th week)
 - Starting weight: 81.85kg, target: 76kg (~5.85kg to lose)

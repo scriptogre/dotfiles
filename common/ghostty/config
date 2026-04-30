@@ -3,14 +3,22 @@ font-family = JetBrainsMono Nerd Font Mono
 font-size = 14
 font-thicken = true
 
-macos-titlebar-style = hidden
+macos-titlebar-style = tabs
 window-padding-x = 8
 window-padding-y = 4
 window-padding-balance = true
 
-background-opacity = 0.9
-background-blur = 40
+background-opacity = 0.95
+background-blur = 80
 
 confirm-close-surface = false
 mouse-hide-while-typing = true
 macos-option-as-alt = left
+working-directory = home
+window-inherit-working-directory = false
+tab-inherit-working-directory = false
+split-inherit-working-directory = false
+
+keybind = performable:ctrl+c=copy_to_clipboard
+keybind = ctrl+v=paste_from_clipboard
+keybind = cmd+backspace=text:\x17

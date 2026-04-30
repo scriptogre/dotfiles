@@ -1,0 +1,18 @@
+services:
+  anki-bot:
+    build:
+      context: ./bot
+    container_name: anki-bot
+    env_file: .env
+    volumes:
+      - ./data:/data
+    networks:
+      - default
+      - proxy
+    restart: unless-stopped
+    # Reachable from openclaw at http://anki-bot:8080 via the proxy network.
+    # No host port exposure needed.
+
+networks:
+  proxy:
+    external: true

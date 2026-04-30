@@ -1,0 +1,14 @@
+[project]
+name = "anki-bot"
+version = "0.1.0"
+description = "HTTP service for adding cards to per-user Anki collections that sync to ankiweb.net"
+requires-python = ">=3.12"
+dependencies = [
+    "anki==25.9.2",
+    "fastapi>=0.118",
+    "uvicorn[standard]>=0.30",
+    "pydantic>=2.0",
+]
+
+[tool.uv]
+package = false

@@ -16,6 +16,9 @@ services:
       - "host.docker.internal:host-gateway"
     ports:
       - "18789:18789"
+    networks:
+      - default
+      - proxy
     init: true
     restart: unless-stopped
     command: ["node", "dist/index.js", "gateway", "--bind", "lan", "--port", "18789"]

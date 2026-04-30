@@ -5,6 +5,7 @@ result
 # Runtime data (ThinkCentre services)
 .env
 *.env
+*.env.backup
 *.hm-backup
 
 # Syncthing
@@ -24,8 +25,15 @@ result
 hosts/thinkcentre/openclaw/config/agents/
 hosts/thinkcentre/openclaw/config/canvas/
 hosts/thinkcentre/openclaw/config/credentials/
+hosts/thinkcentre/openclaw/config/devices/
+hosts/thinkcentre/openclaw/config/identity/
+hosts/thinkcentre/openclaw/config/logs/
+hosts/thinkcentre/openclaw/config/media/
+hosts/thinkcentre/openclaw/config/memory/
 hosts/thinkcentre/openclaw/config/telegram/
 hosts/thinkcentre/openclaw/config/update-check.json
+hosts/thinkcentre/openclaw/config/*.bak
+hosts/thinkcentre/openclaw/config/*.bak.*
 hosts/thinkcentre/openclaw/config/skills/host-ssh/
 hosts/thinkcentre/openclaw/workspace/.openclaw/
 hosts/thinkcentre/openclaw/workspace/TOOLS.md

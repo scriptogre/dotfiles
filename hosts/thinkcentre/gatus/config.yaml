@@ -2,16 +2,15 @@
 # Dashboard: status.christiantanul.com (LAN/Tailscale only)
 # Alerts: email via Resend SMTP to homelab@christiantanul.com
 #
-# Endpoints are checked at two intervals:
-#   - 60s for infrastructure (DNS, connectivity) — outages here affect everything
-#   - 5m for services — individual app health checks
+# Groups = devices. Endpoint names are just the service.
+# Email subjects read as: "ThinkCentre/Plex", "Synology-2/AdGuard DNS", etc.
 #
 # The gatus-helper container (Alpine + busybox httpd) exposes system-level
 # checks as CGI scripts that return 200/503 JSON responses.
 
 alerting:
   email:
-    from: "status@christiantanul.com"
+    from: "Status <status@christiantanul.com>"
     host: "smtp.resend.com"
     port: 587
     username: "resend"
@@ -19,8 +18,8 @@ alerting:
     to: "homelab@christiantanul.com"
     default-alert:
       enabled: true
-      failure-threshold: 5
-      success-threshold: 3
+      failure-threshold: 10
+      success-threshold: 5
       send-on-resolved: true
 
 storage:
@@ -33,14 +32,14 @@ ui:
 
 endpoints:
 
-  # ─── Infrastructure ────────────────────────────────────────
-  # Core network services. Checked every 60s because failures
-  # here cascade to everything else.
+  # ─── ThinkCentre ───────────────────────────────────────────
+  # Infrastructure, system health, and Docker services on the
+  # ThinkCentre m80q. Infra checks run every 2m, the rest 5m.
 
-  - name: "DNS (AdGuard 1)"
-    group: "Infra"
+  - name: "AdGuard DNS"
+    group: "ThinkCentre"
     url: "192.168.0.12"
-    interval: 60s
+    interval: 2m
     dns:
       query-name: "christiantanul.com"
       query-type: "A"
@@ -50,23 +49,10 @@ endpoints:
       - type: email
         description: "Primary DNS (AdGuard on ThinkCentre) is not resolving queries. All local domain resolution depends on this."
 
-  - name: "DNS (AdGuard 2)"
-    group: "Infra"
-    url: "100.114.162.56"
-    interval: 60s
-    dns:
-      query-name: "christiantanul.com"
-      query-type: "A"
-    conditions:
-      - "[DNS_RCODE] == NOERROR"
-    alerts:
-      - type: email
-        description: "Secondary DNS (AdGuard on Synology-2) is not resolving queries. Failover DNS for when primary is unreachable."
-
   - name: "Internet"
-    group: "Infra"
+    group: "ThinkCentre"
     url: "icmp://1.1.1.1"
-    interval: 60s
+    interval: 2m
     conditions:
       - "[CONNECTED] == true"
     alerts:
@@ -74,23 +60,17 @@ endpoints:
         description: "ThinkCentre cannot reach the internet (ping to 1.1.1.1 failed). Check router, ISP, or ethernet cable."
 
   - name: "Tailscale → Synology-2"
-    group: "Infra"
+    group: "ThinkCentre"
     url: "icmp://100.114.162.56"
-    interval: 60s
+    interval: 2m
     conditions:
       - "[CONNECTED] == true"
     alerts:
       - type: email
         description: "Cannot reach Synology-2 at remote site via Tailscale. The device may be offline or Tailscale disconnected."
 
-  # Proxmox ping removed — the HTTPS check in the Proxmox section covers reachability.
-
-  # ─── ThinkCentre Health ────────────────────────────────────
-  # System-level checks via gatus-helper CGI scripts.
-  # These detect problems that individual service checks won't catch.
-
   - name: "Disk Space"
-    group: "Health"
+    group: "ThinkCentre"
     url: "http://gatus-helper:8080/cgi-bin/disk.sh"
     interval: 5m
     conditions:
@@ -99,8 +79,8 @@ endpoints:
       - type: email
         description: "Disk usage exceeded 85% on one or more mount points (/, /home, or NAS mounts). Check with 'df -h' on ThinkCentre."
 
-  - name: "Unhealthy Containers"
-    group: "Health"
+  - name: "Docker"
+    group: "ThinkCentre"
     url: "http://gatus-helper:8080/cgi-bin/docker.sh"
     interval: 5m
     conditions:
@@ -110,7 +90,7 @@ endpoints:
         description: "One or more Docker containers are stopped or unhealthy. Run 'docker ps -a' on ThinkCentre to see which."
 
   - name: "SMB Mounts"
-    group: "Health"
+    group: "ThinkCentre"
     url: "http://gatus-helper:8080/cgi-bin/mounts.sh"
     interval: 5m
     conditions:
@@ -119,8 +99,8 @@ endpoints:
       - type: email
         description: "Synology NAS SMB mounts (/mnt/nas/*) are inaccessible. The Synology may be down or the network path broken."
 
-  - name: "Syncthing (Mac ↔ TC)"
-    group: "Health"
+  - name: "Syncthing"
+    group: "ThinkCentre"
     url: "http://gatus-helper:8080/cgi-bin/syncthing.sh"
     interval: 5m
     conditions:
@@ -129,12 +109,18 @@ endpoints:
       - type: email
         description: "Syncthing Projects folder has sync errors. Changes between Mac and ThinkCentre may not be propagating. Check syncthing.christiantanul.com."
 
-  # ─── ThinkCentre Services ──────────────────────────────────
-  # Docker services running on the ThinkCentre.
-  # Checked via internal Docker network or host IP.
+  - name: "Systemd"
+    group: "ThinkCentre"
+    url: "http://gatus-helper:8080/cgi-bin/systemd-failed.sh"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: email
+        description: "One or more systemd units on the ThinkCentre are in failed state. SSH and run 'systemctl --failed' to see which."
 
   - name: "AdGuard"
-    group: "Services"
+    group: "ThinkCentre"
     url: "http://adguard:80"
     interval: 5m
     conditions:
@@ -144,7 +130,7 @@ endpoints:
         description: "AdGuard Home DNS server web UI is down. DNS may still work but management is inaccessible."
 
   - name: "AdGuard Sync"
-    group: "Services"
+    group: "ThinkCentre"
     url: "http://adguard-sync:8080"
     interval: 5m
     conditions:
@@ -155,7 +141,7 @@ endpoints:
 
   # Home Assistant returns 401 when not logged in — that's fine, it means the service is up.
   - name: "Home Assistant"
-    group: "Services"
+    group: "ThinkCentre"
     url: "http://home-assistant:8123"
     interval: 5m
     conditions:
@@ -165,7 +151,7 @@ endpoints:
         description: "Home Assistant is not responding. Smart home automations, sensors, and integrations are offline."
 
   - name: "Vaultwarden"
-    group: "Services"
+    group: "ThinkCentre"
     url: "http://vaultwarden:80"
     interval: 5m
     conditions:
@@ -175,7 +161,7 @@ endpoints:
         description: "Vaultwarden password manager is down. Bitwarden clients won't be able to sync."
 
   - name: "Vaultwarden Backup"
-    group: "Services"
+    group: "ThinkCentre"
     url: "http://gatus-helper:8080/cgi-bin/vaultwarden-backup.sh"
     interval: 15m
     conditions:
@@ -185,7 +171,7 @@ endpoints:
         description: "Vaultwarden backup is unhealthy — either stale (>25h old), local backup failed, or both Synology targets failed. SSH to ThinkCentre and check 'journalctl -u vaultwarden-backup'."
 
   - name: "1Password Export"
-    group: "Services"
+    group: "ThinkCentre"
     url: "http://gatus-helper:8080/cgi-bin/onepassword-export.sh"
     interval: 1h
     conditions:
@@ -194,18 +180,8 @@ endpoints:
       - type: email
         description: "1Password daily export is stale (>36h old) or missing on Synology. Check the Mac's launchd log: ~/Library/Logs/onepassword-export.log"
 
-  - name: "Failed Systemd Units"
-    group: "Health"
-    url: "http://gatus-helper:8080/cgi-bin/systemd-failed.sh"
-    interval: 5m
-    conditions:
-      - "[STATUS] == 200"
-    alerts:
-      - type: email
-        description: "One or more systemd units on the ThinkCentre are in failed state. SSH and run 'systemctl --failed' to see which."
-
   - name: "Umami"
-    group: "Services"
+    group: "ThinkCentre"
     url: "http://umami:3000"
     interval: 5m
     conditions:
@@ -215,8 +191,8 @@ endpoints:
         description: "Umami web analytics is down. Analytics tracking for sites will stop collecting data."
 
   # CouchDB returns 401 without auth — means the service is running.
-  - name: "Obsidian CouchDB"
-    group: "Services"
+  - name: "Obsidian Sync"
+    group: "ThinkCentre"
     url: "http://obsidian-couchdb:5984"
     interval: 5m
     conditions:
@@ -226,7 +202,7 @@ endpoints:
         description: "Obsidian LiveSync CouchDB is down. Obsidian notes will stop syncing between devices."
 
   - name: "Plex"
-    group: "Services"
+    group: "ThinkCentre"
     url: "http://192.168.0.12:32400/web"
     interval: 5m
     conditions:
@@ -236,7 +212,7 @@ endpoints:
         description: "Plex media server is not responding."
 
   - name: "Cockpit"
-    group: "Services"
+    group: "ThinkCentre"
     url: "http://192.168.0.12:9090"
     interval: 5m
     conditions:
@@ -247,7 +223,7 @@ endpoints:
 
   # Healthclaw returns 404 on root (no index route) — any HTTP response means it's alive.
   - name: "Healthclaw"
-    group: "Services"
+    group: "ThinkCentre"
     url: "http://healthclaw:8099"
     interval: 5m
     conditions:
@@ -258,7 +234,7 @@ endpoints:
 
   # SpacetimeDB may return various codes depending on state — any response means alive.
   - name: "SpacetimeDB"
-    group: "Services"
+    group: "ThinkCentre"
     url: "http://spacetimedb:3000"
     interval: 5m
     conditions:
@@ -269,7 +245,7 @@ endpoints:
 
   # OpenClaw containers are on their own Docker network, so we reach them via host IP.
   - name: "OpenClaw"
-    group: "Services"
+    group: "ThinkCentre"
     url: "http://192.168.0.12:18789"
     interval: 5m
     conditions:
@@ -279,7 +255,7 @@ endpoints:
         description: "OpenClaw AI assistant is not responding."
 
   - name: "OpenClaw Legal"
-    group: "Services"
+    group: "ThinkCentre"
     url: "http://192.168.0.12:18790"
     interval: 5m
     conditions:
@@ -287,6 +263,66 @@ endpoints:
     alerts:
       - type: email
         description: "OpenClaw Legal assistant is not responding."
+
+  - name: "Sonarr"
+    group: "ThinkCentre"
+    url: "http://sonarr:8989"
+    interval: 5m
+    client:
+      timeout: 10s
+    conditions:
+      - "[STATUS] == any(200, 301, 302)"
+    alerts:
+      - type: email
+        description: "Sonarr (TV show manager) is down."
+
+  - name: "Radarr"
+    group: "ThinkCentre"
+    url: "http://radarr:7878"
+    interval: 5m
+    client:
+      timeout: 10s
+    conditions:
+      - "[STATUS] == any(200, 301, 302)"
+    alerts:
+      - type: email
+        description: "Radarr (movie manager) is down."
+
+  - name: "Prowlarr"
+    group: "ThinkCentre"
+    url: "http://prowlarr:9696"
+    interval: 5m
+    client:
+      timeout: 10s
+    conditions:
+      - "[STATUS] == any(200, 301, 302)"
+    alerts:
+      - type: email
+        description: "Prowlarr (indexer aggregator for Sonarr/Radarr) is down."
+
+  - name: "qBittorrent"
+    group: "ThinkCentre"
+    url: "http://qbittorrent:9865"
+    interval: 5m
+    client:
+      timeout: 10s
+    conditions:
+      - "[STATUS] == any(200, 301, 302)"
+    alerts:
+      - type: email
+        description: "qBittorrent is down."
+
+  - name: "Wakapi"
+    group: "ThinkCentre"
+    url: "http://wakapi:3000/api/health"
+    interval: 5m
+    client:
+      timeout: 10s
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: email
+        description: "Wakapi coding time tracker is down."
 
   # ─── Public Sites ──────────────────────────────────────────
   # External-facing websites behind Caddy. Checked via HTTPS
@@ -407,10 +443,10 @@ endpoints:
         description: "Dosar document viewer is unreachable."
 
   # ─── Synology DS923+ (192.168.0.14) ───────────────────────
-  # NAS at home running Docker services. All endpoints go down
-  # together if the NAS shuts off (e.g., thermal shutdown).
+  # NAS at home. All endpoints go down together if the NAS
+  # shuts off (e.g., thermal shutdown).
 
-  - name: "Synology Ping"
+  - name: "Ping"
     group: "Synology"
     url: "icmp://192.168.0.14"
     interval: 5m
@@ -431,66 +467,6 @@ endpoints:
     alerts:
       - type: email
         description: "Synology DSM web interface is down."
-
-  - name: "Sonarr"
-    group: "Services"
-    url: "http://sonarr:8989"
-    interval: 5m
-    client:
-      timeout: 10s
-    conditions:
-      - "[STATUS] == any(200, 301, 302)"
-    alerts:
-      - type: email
-        description: "Sonarr (TV show manager) is down."
-
-  - name: "Radarr"
-    group: "Services"
-    url: "http://radarr:7878"
-    interval: 5m
-    client:
-      timeout: 10s
-    conditions:
-      - "[STATUS] == any(200, 301, 302)"
-    alerts:
-      - type: email
-        description: "Radarr (movie manager) is down."
-
-  - name: "Prowlarr"
-    group: "Services"
-    url: "http://prowlarr:9696"
-    interval: 5m
-    client:
-      timeout: 10s
-    conditions:
-      - "[STATUS] == any(200, 301, 302)"
-    alerts:
-      - type: email
-        description: "Prowlarr (indexer aggregator for Sonarr/Radarr) is down."
-
-  - name: "qBittorrent"
-    group: "Services"
-    url: "http://qbittorrent:9865"
-    interval: 5m
-    client:
-      timeout: 10s
-    conditions:
-      - "[STATUS] == any(200, 301, 302)"
-    alerts:
-      - type: email
-        description: "qBittorrent is down."
-
-  - name: "Wakapi"
-    group: "Services"
-    url: "http://wakapi:3000/api/health"
-    interval: 5m
-    client:
-      timeout: 10s
-    conditions:
-      - "[STATUS] == 200"
-    alerts:
-      - type: email
-        description: "Wakapi coding time tracker is down."
 
   - name: "Downloads"
     group: "Synology"
@@ -602,7 +578,7 @@ endpoints:
 
   # ─── Synology-2 (remote site, via Tailscale) ──────────────
 
-  - name: "Synology-2 Ping"
+  - name: "Ping"
     group: "Synology-2"
     url: "icmp://100.114.162.56"
     interval: 5m
@@ -612,7 +588,7 @@ endpoints:
       - type: email
         description: "Synology-2 at remote site is not responding. Device may be offline or Tailscale disconnected."
 
-  - name: "DSM-2"
+  - name: "DSM"
     group: "Synology-2"
     url: "http://100.114.162.56:5000"
     interval: 5m
@@ -624,7 +600,7 @@ endpoints:
       - type: email
         description: "Synology-2 DSM web interface is down."
 
-  - name: "AdGuard-2"
+  - name: "AdGuard"
     group: "Synology-2"
     url: "http://100.114.162.56:8080"
     interval: 5m
@@ -635,6 +611,19 @@ endpoints:
     alerts:
       - type: email
         description: "AdGuard Home on Synology-2 is down. Secondary/failover DNS is unavailable."
+
+  - name: "AdGuard DNS"
+    group: "Synology-2"
+    url: "100.114.162.56"
+    interval: 2m
+    dns:
+      query-name: "christiantanul.com"
+      query-type: "A"
+    conditions:
+      - "[DNS_RCODE] == NOERROR"
+    alerts:
+      - type: email
+        description: "Secondary DNS (AdGuard on Synology-2) is not resolving queries. Failover DNS for when primary is unreachable."
 
   # ─── Proxmox (via Tailscale) ───────────────────────────────
 

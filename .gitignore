@@ -38,3 +38,17 @@ hosts/thinkcentre/openclaw/config/skills/host-ssh/
 hosts/thinkcentre/openclaw/workspace/.openclaw/
 hosts/thinkcentre/openclaw/workspace/TOOLS.md
 hosts/thinkcentre/openclaw/healthclaw/data/
+
+# Openclaw GTFD runtime
+hosts/thinkcentre/openclaw-gtfd/config/agents/
+hosts/thinkcentre/openclaw-gtfd/config/canvas/
+hosts/thinkcentre/openclaw-gtfd/config/credentials/
+hosts/thinkcentre/openclaw-gtfd/config/devices/
+hosts/thinkcentre/openclaw-gtfd/config/identity/
+hosts/thinkcentre/openclaw-gtfd/config/logs/
+hosts/thinkcentre/openclaw-gtfd/config/media/
+hosts/thinkcentre/openclaw-gtfd/config/memory/
+hosts/thinkcentre/openclaw-gtfd/config/telegram/
+hosts/thinkcentre/openclaw-gtfd/config/update-check.json
+hosts/thinkcentre/openclaw-gtfd/config/*.bak
+hosts/thinkcentre/openclaw-gtfd/config/*.bak.*

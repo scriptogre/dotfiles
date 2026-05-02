@@ -1,6 +1,6 @@
 [
   {
-    "name": "daily-inbox",
+    "name": "morning-inbox",
     "schedule": {
       "kind": "cron",
       "expr": "0 9 * * *",
@@ -9,8 +9,27 @@
     "sessionTarget": "isolated",
     "payload": {
       "kind": "agentTurn",
-      "message": "Check the Todoist inbox. Count the items. If there are items, message the user with the count and ask if they want to process. Keep it brief and natural. If the inbox is empty, say nothing — do not message.",
-      "trigger": "daily-inbox"
+      "message": "Morning inbox processing. Check the Todoist inbox count. If there are items, message the user with the count and ask if they want to process. If the inbox is empty, say nothing.",
+      "trigger": "morning-inbox"
+    },
+    "delivery": {
+      "mode": "announce",
+      "channel": "telegram"
+    },
+    "agentId": "gtfd"
+  },
+  {
+    "name": "evening-planning",
+    "schedule": {
+      "kind": "cron",
+      "expr": "0 20 * * *",
+      "tz": "Europe/Bucharest"
+    },
+    "sessionTarget": "isolated",
+    "payload": {
+      "kind": "agentTurn",
+      "message": "Evening planning. Follow the 'Evening — plan tomorrow' instructions from GTFD-SKILL.md. Check tomorrow's calendar, existing tasks due tomorrow, overdue tasks, and routine items. Present a summary and suggest 1-3 backlog tasks. Ask for context about tomorrow before finalizing.",
+      "trigger": "evening-planning"
     },
     "delivery": {
       "mode": "announce",
@@ -22,13 +41,13 @@
     "name": "weekly-review",
     "schedule": {
       "kind": "cron",
-      "expr": "0 18 * * 0",
+      "expr": "0 10 * * 0",
       "tz": "Europe/Bucharest"
     },
     "sessionTarget": "isolated",
     "payload": {
       "kind": "agentTurn",
-      "message": "Start a weekly review. Read the GTFD skill at /home/node/.openclaw/skills-shared/gtfd/SKILL.md and follow the weekly review mode instructions. Pull all Todoist projects and tasks. Identify stale tasks and projects without next actions. Message the user to start the review.",
+      "message": "Weekly review. Follow the 'Weekly review' instructions from GTFD-SKILL.md. Go through all the steps: collect, process inbox, review calendar, review projects, stale tasks, someday/maybe.",
       "trigger": "weekly-review"
     },
     "delivery": {

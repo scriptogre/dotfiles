@@ -1,0 +1,30 @@
+services:
+  openclaw-polish-gateway:
+    image: ${OPENCLAW_IMAGE:-openclaw:2026.3.13-local}
+    container_name: openclaw-polish
+    env_file: .env
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      TZ: Europe/Bucharest
+    volumes:
+      - ./config:/home/node/.openclaw
+      - ./workspace:/home/node/.openclaw/workspace
+    ports:
+      - "18792:18792"
+    networks:
+      - default
+      - proxy
+    init: true
+    restart: unless-stopped
+    command: ["node", "dist/index.js", "gateway", "--bind", "lan", "--port", "18792"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:18792/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+networks:
+  proxy:
+    external: true

@@ -1,0 +1,21 @@
+[
+  {
+    "name": "daily-polish",
+    "schedule": {
+      "kind": "cron",
+      "expr": "0 10 * * *",
+      "tz": "Europe/Bucharest"
+    },
+    "sessionTarget": "isolated",
+    "payload": {
+      "kind": "agentTurn",
+      "message": "Start today's Polish practice session. Keep it short and conversational.",
+      "trigger": "daily-polish"
+    },
+    "delivery": {
+      "mode": "announce",
+      "channel": "telegram"
+    },
+    "agentId": "polish"
+  }
+]

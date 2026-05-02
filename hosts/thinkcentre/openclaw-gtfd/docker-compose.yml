@@ -18,7 +18,7 @@ services:
       - proxy
     init: true
     restart: unless-stopped
-    command: ["node", "dist/index.js", "gateway", "--bind", "lan", "--port", "18791"]
+    command: ["node", "dist/index.js", "gateway", "--bind", "lan", "--port", "18791", "--verbose"]
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:18791/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s

@@ -1,8 +1,4 @@
 {
-  "meta": {
-    "lastTouchedVersion": "2026.4.29",
-    "lastTouchedAt": "2026-05-02T12:07:47.201Z"
-  },
   "agents": {
     "defaults": {
       "model": {
@@ -32,7 +28,7 @@
     },
     "list": [
       {
-        "id": "gtfd",
+        "id": "polish",
         "workspace": "/home/node/.openclaw/workspace"
       }
     ]
@@ -49,20 +45,11 @@
           }
         ]
       }
-    },
-    "exec": {
-      "security": "allowlist",
-      "safeBins": [
-        "curl"
-      ],
-      "safeBinProfiles": {
-        "curl": {}
-      }
     }
   },
   "bindings": [
     {
-      "agentId": "gtfd",
+      "agentId": "polish",
       "match": {
         "channel": "telegram"
       }
@@ -110,15 +97,7 @@
       "dangerouslyAllowHostHeaderOriginFallback": true
     },
     "auth": {
-      "mode": "token",
-      "token": "99d6072559ee4dc0edb9ed724e4499b5c102ce7fa2df7ca1"
-    }
-  },
-  "plugins": {
-    "entries": {
-      "anthropic": {
-        "enabled": true
-      }
+      "mode": "token"
     }
   }
 }

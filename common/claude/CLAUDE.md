@@ -1,5 +1,6 @@
 * Do not include the fact that a commit was made by/with Claude Code.
 * Do not include anything about Claude Code in your commit messages.
+* **NEVER use the Explore agent.** Always search/read files directly using Bash (grep, find), Read, and Grep tools instead of spawning Explore subagents.
 
 ## Homelab — ThinkCentre m80q Gen 4
 
@@ -14,6 +15,28 @@
   * Do NOT use `docker exec caddy caddy reload` — use the `just` command.
   * The Caddyfile is bind-mounted as a single file. If you edit it with `sed -i` or any tool that atomically renames, Caddy keeps the old inode and `just` reload won't see changes — follow up with `docker compose restart caddy` in that case.
 * After any significant dotfiles changes, **remind/ask me to commit & push** so we don't have uncommitted changes.
+
+## Secrets — 1Password CLI
+
+Access secrets via `op` CLI without reading them yourself. Pattern:
+
+```bash
+# Find items (safe - no secrets shown)
+op item list | grep -i "keyword"
+
+# Get field labels only (safe)
+op item get ITEM_ID --format json | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{const i=JSON.parse(d);console.log('Title:',i.title);console.log('Fields:',(i.fields||[]).map(f=>f.label).join(', '))})"
+
+# Inject a secret into a .env file WITHOUT reading it
+op item get ITEM_ID --fields label=password --reveal  # pipe directly into file writes
+
+# Example: write to remote .env
+ssh thinkcentre "cat >> ~/path/.env" <<EOF
+SECRET_VAR=$(op item get ITEM_ID --fields label=password --reveal)
+EOF
+```
+
+**Never** use `echo` or `console.log` to print secret values. Pipe them directly into file writes or curl auth flags.
 
 ## System Tools
 

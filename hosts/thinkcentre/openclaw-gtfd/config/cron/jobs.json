@@ -1,0 +1,40 @@
+[
+  {
+    "name": "daily-inbox",
+    "schedule": {
+      "kind": "cron",
+      "expr": "0 9 * * *",
+      "tz": "Europe/Bucharest"
+    },
+    "sessionTarget": "isolated",
+    "payload": {
+      "kind": "agentTurn",
+      "message": "Check the Todoist inbox. Count the items. If there are items, message the user with the count and ask if they want to process. Keep it brief and natural. If the inbox is empty, say nothing — do not message.",
+      "trigger": "daily-inbox"
+    },
+    "delivery": {
+      "mode": "announce",
+      "channel": "telegram"
+    },
+    "agentId": "gtfd"
+  },
+  {
+    "name": "weekly-review",
+    "schedule": {
+      "kind": "cron",
+      "expr": "0 18 * * 0",
+      "tz": "Europe/Bucharest"
+    },
+    "sessionTarget": "isolated",
+    "payload": {
+      "kind": "agentTurn",
+      "message": "Start a weekly review. Read the GTFD skill at /home/node/.openclaw/skills-shared/gtfd/SKILL.md and follow the weekly review mode instructions. Pull all Todoist projects and tasks. Identify stale tasks and projects without next actions. Message the user to start the review.",
+      "trigger": "weekly-review"
+    },
+    "delivery": {
+      "mode": "announce",
+      "channel": "telegram"
+    },
+    "agentId": "gtfd"
+  }
+]

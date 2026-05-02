@@ -1,0 +1,116 @@
+{
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "anthropic/claude-sonnet-4-6"
+      },
+      "models": {
+        "anthropic/claude-sonnet-4-6": {
+          "alias": "sonnet",
+          "params": {
+            "cacheRetention": "short"
+          }
+        }
+      },
+      "workspace": "/home/node/.openclaw/workspace",
+      "bootstrapMaxChars": 20000,
+      "bootstrapTotalMaxChars": 150000,
+      "contextPruning": {
+        "mode": "cache-ttl",
+        "ttl": "30m"
+      },
+      "compaction": {
+        "mode": "safeguard"
+      },
+      "heartbeat": {
+        "every": "30m"
+      }
+    },
+    "list": [
+      {
+        "id": "gtfd",
+        "workspace": "/home/node/.openclaw/workspace"
+      }
+    ]
+  },
+  "tools": {
+    "media": {
+      "audio": {
+        "enabled": true,
+        "models": [
+          {
+            "provider": "groq",
+            "model": "whisper-large-v3-turbo"
+          }
+        ]
+      }
+    },
+    "exec": {
+      "security": "allowlist",
+      "safeBins": [
+        "curl"
+      ],
+      "safeBinProfiles": {
+        "curl": {}
+      }
+    }
+  },
+  "bindings": [
+    {
+      "agentId": "gtfd",
+      "match": {
+        "channel": "telegram"
+      }
+    }
+  ],
+  "messages": {
+    "tts": {
+      "auto": "off"
+    }
+  },
+  "commands": {
+    "native": "auto",
+    "nativeSkills": "auto",
+    "restart": true,
+    "ownerDisplay": "raw"
+  },
+  "cron": {
+    "enabled": true,
+    "maxConcurrentRuns": 1,
+    "retry": {
+      "maxAttempts": 2,
+      "backoffMs": [
+        60000,
+        120000
+      ]
+    }
+  },
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "dmPolicy": "allowlist",
+      "groupPolicy": "allowlist",
+      "streaming": "partial",
+      "allowFrom": [
+        "1351597714"
+      ],
+      "groupAllowFrom": [
+        "1351597714"
+      ]
+    }
+  },
+  "gateway": {
+    "mode": "local",
+    "controlUi": {
+      "dangerouslyAllowHostHeaderOriginFallback": true
+    },
+    "auth": {
+      "mode": "token",
+      "token": "5d5e5a2b9fe2e9b48fab44aad51c8d9e7c179c61c06179d3"
+    }
+  },
+  "meta": {
+    "lastTouchedVersion": "2026.3.13",
+    "lastTouchedAt": "2026-05-02T10:59:37.670Z"
+  }
+}

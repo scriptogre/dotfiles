@@ -39,6 +39,9 @@ hosts/thinkcentre/openclaw/workspace/.openclaw/
 hosts/thinkcentre/openclaw/workspace/TOOLS.md
 hosts/thinkcentre/openclaw/healthclaw/data/
 
+# Openclaw config files (mutated at runtime with tokens - track .template.json instead)
+**/openclaw*/config/openclaw.json
+
 # Openclaw GTFD runtime
 hosts/thinkcentre/openclaw-gtfd/config/agents/
 hosts/thinkcentre/openclaw-gtfd/config/canvas/
@@ -52,3 +55,17 @@ hosts/thinkcentre/openclaw-gtfd/config/telegram/
 hosts/thinkcentre/openclaw-gtfd/config/update-check.json
 hosts/thinkcentre/openclaw-gtfd/config/*.bak
 hosts/thinkcentre/openclaw-gtfd/config/*.bak.*
+
+# Openclaw Polish runtime
+hosts/thinkcentre/openclaw-polish/config/agents/
+hosts/thinkcentre/openclaw-polish/config/canvas/
+hosts/thinkcentre/openclaw-polish/config/credentials/
+hosts/thinkcentre/openclaw-polish/config/devices/
+hosts/thinkcentre/openclaw-polish/config/identity/
+hosts/thinkcentre/openclaw-polish/config/logs/
+hosts/thinkcentre/openclaw-polish/config/media/
+hosts/thinkcentre/openclaw-polish/config/memory/
+hosts/thinkcentre/openclaw-polish/config/telegram/
+hosts/thinkcentre/openclaw-polish/config/update-check.json
+hosts/thinkcentre/openclaw-polish/config/*.bak
+hosts/thinkcentre/openclaw-polish/config/*.bak.*

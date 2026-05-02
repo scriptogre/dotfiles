@@ -1,7 +1,9 @@
 {
-  "meta": {
-    "lastTouchedVersion": "2026.4.29",
-    "lastTouchedAt": "2026-05-02T12:07:47.201Z"
+  "wizard": {
+    "lastRunAt": "2026-04-03T20:28:05.718Z",
+    "lastRunVersion": "2026.3.13",
+    "lastRunCommand": "doctor",
+    "lastRunMode": "local"
   },
   "agents": {
     "defaults": {
@@ -21,7 +23,7 @@
       "bootstrapTotalMaxChars": 150000,
       "contextPruning": {
         "mode": "cache-ttl",
-        "ttl": "30m"
+        "ttl": "1h"
       },
       "compaction": {
         "mode": "safeguard"
@@ -32,7 +34,7 @@
     },
     "list": [
       {
-        "id": "gtfd",
+        "id": "assistant",
         "workspace": "/home/node/.openclaw/workspace"
       }
     ]
@@ -41,11 +43,14 @@
     "media": {
       "audio": {
         "enabled": true,
-        "echoTranscript": true,
-        "echoFormat": "> {transcript}",
         "models": [
           {
-            "provider": "groq"
+            "provider": "groq",
+            "model": "whisper-large-v3-turbo"
+          },
+          {
+            "provider": "openai",
+            "model": "gpt-4o-mini-transcribe"
           }
         ]
       }
@@ -62,7 +67,7 @@
   },
   "bindings": [
     {
-      "agentId": "gtfd",
+      "agentId": "assistant",
       "match": {
         "channel": "telegram"
       }
@@ -70,7 +75,13 @@
   ],
   "messages": {
     "tts": {
-      "auto": "off"
+      "auto": "off",
+      "provider": "openai",
+      "openai": {
+        "baseUrl": "http://anki-bot:8080/v1",
+        "model": "gemini-tts",
+        "voice": "Kore"
+      }
     }
   },
   "commands": {
@@ -83,23 +94,26 @@
     "enabled": true,
     "maxConcurrentRuns": 1,
     "retry": {
-      "maxAttempts": 2,
+      "maxAttempts": 3,
       "backoffMs": [
         60000,
-        120000
+        120000,
+        300000
       ]
     }
+  },
+  "hooks": {
+    "enabled": true,
+    "path": "/hooks",
+    "token": "b698efd5b41488d91c1102e1bce92bcf2e80b7282eb36af4a3757503809e561d",
+    "allowedAgentIds": [
+      "assistant"
+    ]
   },
   "channels": {
     "telegram": {
       "enabled": true,
-      "dmPolicy": "allowlist",
-      "allowFrom": [
-        "1351597714"
-      ],
-      "groupAllowFrom": [
-        "1351597714"
-      ],
+      "dmPolicy": "pairing",
       "groupPolicy": "allowlist",
       "streaming": "partial"
     }
@@ -111,14 +125,7 @@
     },
     "auth": {
       "mode": "token",
-      "token": "99d6072559ee4dc0edb9ed724e4499b5c102ce7fa2df7ca1"
-    }
-  },
-  "plugins": {
-    "entries": {
-      "anthropic": {
-        "enabled": true
-      }
+      "token": ""
     }
   }
 }

@@ -1,14 +1,4 @@
 {
-  "meta": {
-    "lastTouchedVersion": "2026.3.13",
-    "lastTouchedAt": "2026-04-03T20:28:05.727Z"
-  },
-  "wizard": {
-    "lastRunAt": "2026-04-03T20:28:05.718Z",
-    "lastRunVersion": "2026.3.13",
-    "lastRunCommand": "doctor",
-    "lastRunMode": "local"
-  },
   "agents": {
     "defaults": {
       "model": {
@@ -27,7 +17,7 @@
       "bootstrapTotalMaxChars": 150000,
       "contextPruning": {
         "mode": "cache-ttl",
-        "ttl": "1h"
+        "ttl": "30m"
       },
       "compaction": {
         "mode": "safeguard"
@@ -38,7 +28,7 @@
     },
     "list": [
       {
-        "id": "assistant",
+        "id": "gtfd",
         "workspace": "/home/node/.openclaw/workspace"
       }
     ]
@@ -47,14 +37,11 @@
     "media": {
       "audio": {
         "enabled": true,
+        "echoTranscript": true,
+        "echoFormat": "> {transcript}",
         "models": [
           {
-            "provider": "groq",
-            "model": "whisper-large-v3-turbo"
-          },
-          {
-            "provider": "openai",
-            "model": "gpt-4o-mini-transcribe"
+            "provider": "groq"
           }
         ]
       }
@@ -71,7 +58,7 @@
   },
   "bindings": [
     {
-      "agentId": "assistant",
+      "agentId": "gtfd",
       "match": {
         "channel": "telegram"
       }
@@ -79,13 +66,7 @@
   ],
   "messages": {
     "tts": {
-      "auto": "off",
-      "provider": "openai",
-      "openai": {
-        "baseUrl": "http://anki-bot:8080/v1",
-        "model": "gemini-tts",
-        "voice": "Kore"
-      }
+      "auto": "off"
     }
   },
   "commands": {
@@ -98,26 +79,23 @@
     "enabled": true,
     "maxConcurrentRuns": 1,
     "retry": {
-      "maxAttempts": 3,
+      "maxAttempts": 2,
       "backoffMs": [
         60000,
-        120000,
-        300000
+        120000
       ]
     }
-  },
-  "hooks": {
-    "enabled": true,
-    "path": "/hooks",
-    "token": "b698efd5b41488d91c1102e1bce92bcf2e80b7282eb36af4a3757503809e561d",
-    "allowedAgentIds": [
-      "assistant"
-    ]
   },
   "channels": {
     "telegram": {
       "enabled": true,
-      "dmPolicy": "pairing",
+      "dmPolicy": "allowlist",
+      "allowFrom": [
+        "1351597714"
+      ],
+      "groupAllowFrom": [
+        "1351597714"
+      ],
       "groupPolicy": "allowlist",
       "streaming": "partial"
     }
@@ -129,7 +107,14 @@
     },
     "auth": {
       "mode": "token",
-      "token": "1171028eb2749b875a34afb7d92cf9cd6d24e87677da23b203fbf4d3b45d695f"
+      "token": ""
+    }
+  },
+  "plugins": {
+    "entries": {
+      "anthropic": {
+        "enabled": true
+      }
     }
   }
 }

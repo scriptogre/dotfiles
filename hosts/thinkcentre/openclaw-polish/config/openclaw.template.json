@@ -34,16 +34,25 @@
     ]
   },
   "tools": {
+    "exec": {
+      "security": "allowlist",
+      "safeBins": [
+        "curl"
+      ],
+      "safeBinProfiles": {
+        "curl": {}
+      }
+    },
     "media": {
       "audio": {
         "enabled": true,
-        "echoTranscript": true,
-        "echoFormat": "> {transcript}",
         "models": [
           {
             "provider": "groq"
           }
-        ]
+        ],
+        "echoTranscript": true,
+        "echoFormat": "> {transcript}"
       }
     }
   },
@@ -57,7 +66,13 @@
   ],
   "messages": {
     "tts": {
-      "auto": "off"
+      "auto": "off",
+      "provider": "openai",
+      "openai": {
+        "baseUrl": "http://anki-bot:8080/v1",
+        "model": "gemini-tts",
+        "voice": "Kore"
+      }
     }
   },
   "commands": {
@@ -97,7 +112,8 @@
       "dangerouslyAllowHostHeaderOriginFallback": true
     },
     "auth": {
-      "mode": "token"
+      "mode": "token",
+      "token": ""
     }
   }
 }
